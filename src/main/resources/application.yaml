@@ -1,0 +1,58 @@
+spring:
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 2525
+    username: 51c2c6a995c556
+    password: 2780c1bfbb46ad
+    protocol: smtp
+    default-encoding: UTF-8
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+    test-connection: true
+
+  session:
+    jdbc:
+      initialize-schema: always
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/collaborationTool
+    username: postgres
+    password: 5047
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
+      pool-name: HikariCP
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        default_schema: public
+
+server:
+  address: 0.0.0.0
+  port: 8082
+  ssl:
+    enabled: false
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,application/json
+    min-response-size: 1024
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
