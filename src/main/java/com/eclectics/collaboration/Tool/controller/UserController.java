@@ -71,6 +71,14 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/logout")
+    public ResponseEntity<String> userLogOut(
+            @RequestHeader("Authorization") String tokenHeader
+    ){
+        String token = tokenHeader.replace("Bearer ", "");
+        userService.logOutUser(token);
+        return ResponseEntity.ok("Logged Out");
+    }
 
     @DeleteMapping("/delete")
     public ResponseEntity<String> deleteAccount(
@@ -80,5 +88,7 @@ public class UserController {
         userService.userDeleteAccount(token);
         return ResponseEntity.ok("Account deleted successfully!");
     }
+
+
 }
 
