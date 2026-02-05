@@ -28,3 +28,6 @@ alibaba:
 
 app:
   message: "This is the Production environment"
+
+jwt:
+  secret: ${JWT_SECRET}
