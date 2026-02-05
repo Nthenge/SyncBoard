@@ -106,15 +106,16 @@
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.7.0</version>
         </dependency>
-<<<<<<< HEAD
         <dependency>
             <groupId>com.aliyun.oss</groupId>
             <artifactId>aliyun-sdk-oss</artifactId>
             <version>3.15.2</version>
         </dependency>
-=======
 
->>>>>>> fc88b820067d3cf94f46379a017cb66a5cecbaf1
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
