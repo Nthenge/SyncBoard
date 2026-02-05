@@ -1,0 +1,28 @@
+spring:
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 2525
+    username: ${MAILTRAP_USERNAME}
+    password: ${MAILTRAP_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/collaborationTool
+    username: postgres
+    password: ${DB_PASSWORD}
+
+server:
+  port: 8082
+
+alibaba:
+  cloud:
+    oss:
+      endpoint: https://oss-eu-west-1.aliyuncs.com
+      access-key-id: ${ALIBABA_OSS_KEY}
+      access-key-secret: ${ALIBABA_OSS_SECRET}
+      bucket-name: jagarage
+
+app:
+  message: "This is the Development environment"
