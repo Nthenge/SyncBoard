@@ -13,4 +13,5 @@ public interface UserService {
     UserRegistrationRequestDTO updateUser(String token, UserRegistrationRequestDTO userDTO);
     void userConfirmAccount(String token);
     void userDeleteAccount(String token);
+    void logOutUser(String token);
 }

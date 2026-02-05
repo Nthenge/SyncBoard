@@ -10,12 +10,16 @@ import com.eclectics.collaboration.Tool.service.UserService;
 import com.eclectics.collaboration.Tool.service.EmailService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.UUID;
 
 @Service
@@ -28,18 +32,20 @@ public class UserServiceImpl implements UserService {
     private final JwtUtil jwtUtil;
     private final EmailService emailService;
     private final OSSService ossService;
+    private final StringRedisTemplate redisTemplate;
 
     public UserServiceImpl(UserRespository userRepository,
                            UserMapper mapper,
                            PasswordEncoder passwordEncoder,
                            JwtUtil jwtUtil,
-                           EmailService emailService, OSSService ossService) {
+                           EmailService emailService, OSSService ossService, StringRedisTemplate redisTemplate) {
         this.userRepository = userRepository;
         this.mapper = mapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.emailService = emailService;
         this.ossService = ossService;
+        this.redisTemplate = redisTemplate;
     }
 
     private String getFileExtension(String filename) {
@@ -162,5 +168,25 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         userRepository.delete(user);
+    }
+
+    @Override
+    public void logOutUser(String token) {
+        if (token != null && token.startsWith("Bearer ")) {
+            String jwt = token.substring(7);
+
+            String tokenId = jwtUtil.extractId(jwt);
+            Date expiration = jwtUtil.extractExpiration(jwt);
+            long ttl = expiration.getTime() - System.currentTimeMillis();
+
+            if (ttl > 0) {
+                redisTemplate.opsForValue().set(
+                        "revoked_token:" + tokenId,
+                        "true",
+                        Duration.ofMillis(ttl)
+                );
+            }
+        }
+        SecurityContextHolder.clearContext();
     }
 }
