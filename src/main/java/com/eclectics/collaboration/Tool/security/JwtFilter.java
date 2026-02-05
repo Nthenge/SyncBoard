@@ -6,6 +6,7 @@ import io.jsonwebtoken.MalformedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -16,11 +17,13 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserRespository userRespository;
+    private final StringRedisTemplate redisTemplate;
 
 
-    public JwtFilter(JwtUtil jwtUtil, UserRespository userRespository) {
+    public JwtFilter(JwtUtil jwtUtil, UserRespository userRespository, StringRedisTemplate redisTemplate) {
         this.jwtUtil = jwtUtil;
         this.userRespository = userRespository;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
@@ -34,6 +37,15 @@ public class JwtFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
             String token = authHeader.substring(7);
+
+            String tokenId = jwtUtil.extractId(token);
+            Boolean isRevoked = redisTemplate.hasKey("revoked_token:" + tokenId);
+
+            if (Boolean.TRUE.equals(isRevoked)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Token has been logged out.");
+                return;
+            }
 
             try {
                 String email = jwtUtil.extractEmail(token);
