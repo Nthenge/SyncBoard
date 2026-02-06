@@ -2,12 +2,15 @@ package com.eclectics.collaboration.Tool.controller;
 
 import com.eclectics.collaboration.Tool.dto.InviteRequestDTO;
 import com.eclectics.collaboration.Tool.dto.WorkSpaceRequestDTO;
+import com.eclectics.collaboration.Tool.dto.WorkSpaceResponseDTO;
 import com.eclectics.collaboration.Tool.model.User;
 import com.eclectics.collaboration.Tool.model.WorkSpace;
+import com.eclectics.collaboration.Tool.response.ResponseHandler;
 import com.eclectics.collaboration.Tool.security.CustomUserDetails;
 import com.eclectics.collaboration.Tool.service.EmailService;
 import com.eclectics.collaboration.Tool.service.InvitationService;
 import com.eclectics.collaboration.Tool.service.WorkSpaceService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +19,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -71,4 +75,11 @@ public class WorkSpaceController {
 
         return ResponseEntity.ok("Successfully joined the workspace!");
     }
+
+    @GetMapping("/my-workspaces")
+    public ResponseEntity<Object> getMyWorkspaces(HttpServletRequest request) {
+        List<WorkSpaceResponseDTO> workspaces = workSpaceService.myWorkspaces();
+        return ResponseHandler.generateResponse("Work spaces for logged in user", HttpStatus.OK,workspaces,request.getRequestURI());
+    }
+
 }
