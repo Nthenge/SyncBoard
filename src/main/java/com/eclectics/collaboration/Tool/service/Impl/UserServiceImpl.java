@@ -1,6 +1,7 @@
 package com.eclectics.collaboration.Tool.service.Impl;
 
 import com.eclectics.collaboration.Tool.dto.*;
+import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.mapper.UserMapper;
 import com.eclectics.collaboration.Tool.model.User;
 import com.eclectics.collaboration.Tool.repository.UserRespository;
@@ -8,8 +9,11 @@ import com.eclectics.collaboration.Tool.security.JwtUtil;
 import com.eclectics.collaboration.Tool.service.OSSService;
 import com.eclectics.collaboration.Tool.service.UserService;
 import com.eclectics.collaboration.Tool.service.EmailService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,10 +26,11 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.UUID;
 
+@Slf4j
+@RequiredArgsConstructor
 @Service
 public class UserServiceImpl implements UserService {
 
-    private static final Log log = LogFactory.getLog(UserServiceImpl.class);
     private final UserRespository userRepository;
     private final UserMapper mapper;
     private final PasswordEncoder passwordEncoder;
@@ -33,20 +38,6 @@ public class UserServiceImpl implements UserService {
     private final EmailService emailService;
     private final OSSService ossService;
     private final StringRedisTemplate redisTemplate;
-
-    public UserServiceImpl(UserRespository userRepository,
-                           UserMapper mapper,
-                           PasswordEncoder passwordEncoder,
-                           JwtUtil jwtUtil,
-                           EmailService emailService, OSSService ossService, StringRedisTemplate redisTemplate) {
-        this.userRepository = userRepository;
-        this.mapper = mapper;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtUtil = jwtUtil;
-        this.emailService = emailService;
-        this.ossService = ossService;
-        this.redisTemplate = redisTemplate;
-    }
 
     private String getFileExtension(String filename) {
         if (filename != null && filename.lastIndexOf(".") != -1) {
@@ -90,14 +81,14 @@ public class UserServiceImpl implements UserService {
     public UserLoginResponseDTO userLogin(UserLoginRequestDTO loginRequestDTO) {
 
         User user = userRepository.findByEmail(loginRequestDTO.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid email or password"));
+                .orElseThrow(() -> new CollaborationExceptions.BadRequestException("Invalid email or password"));
 
         if (!passwordEncoder.matches(loginRequestDTO.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid email or password");
+            throw new CollaborationExceptions.BadRequestException("Invalid email or password");
         }
 
         if (!user.isEnabled()) {
-            throw new RuntimeException("Account not confirmed. Please check your email.");
+            throw new CollaborationExceptions.BadRequestException("Account not confirmed. Please check your email.");
         }
 
         String token = jwtUtil.generateToken(user.getEmail());
@@ -124,7 +115,7 @@ public class UserServiceImpl implements UserService {
         String email = jwtUtil.validateAndExtractEmailFromResetToken(token);
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
@@ -133,7 +124,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserRegistrationRequestDTO updateUser(String token, UserRegistrationRequestDTO userDTO) {
 
-        // Identify user by token
         String email = jwtUtil.extractEmail(token);
 
         User existingUser = userRepository.findByEmail(email)
@@ -153,7 +143,7 @@ public class UserServiceImpl implements UserService {
         String email = jwtUtil.validateAndExtractEmailFromConfirmationToken(token);
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
 
         user.setEnabled(true);
         userRepository.save(user);
@@ -165,7 +155,7 @@ public class UserServiceImpl implements UserService {
         String email = jwtUtil.extractEmail(token);
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
 
         userRepository.delete(user);
     }

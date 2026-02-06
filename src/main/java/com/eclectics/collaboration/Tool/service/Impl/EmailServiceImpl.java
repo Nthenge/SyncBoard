@@ -1,6 +1,8 @@
 package com.eclectics.collaboration.Tool.service.Impl;
 
 import com.eclectics.collaboration.Tool.dto.InviteRequestDTO;
+import com.eclectics.collaboration.Tool.exception.CollaborationExceptionHandler;
+import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.model.Invitation;
 import com.eclectics.collaboration.Tool.model.User;
 import com.eclectics.collaboration.Tool.model.WorkSpace;
@@ -22,7 +24,6 @@ import java.util.UUID;
 @Service
 public class EmailServiceImpl implements EmailService {
 
-    @Autowired
     private final JavaMailSender mailSender;
     private final WorkSpaceReposiroty workspaceRepository;
     private final InvitationRepository invitationRepository;
@@ -61,10 +62,10 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void inviteUsers(User owner, InviteRequestDTO inviteDto) throws AccessDeniedException {
         WorkSpace workspace = workspaceRepository.findById(inviteDto.getWorkspaceId())
-                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Workspace not found"));
 
         if (!workspace.getWorkSpaceOwnerId().getId().equals(owner.getId())) {
-            throw new AccessDeniedException("Only the owner can invite others");
+            throw new CollaborationExceptions.UnauthorizedException("Only the owner can invite others");
         }
 
         for (String email : inviteDto.getEmails()) {

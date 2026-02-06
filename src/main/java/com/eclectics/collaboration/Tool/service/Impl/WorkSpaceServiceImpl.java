@@ -2,6 +2,7 @@ package com.eclectics.collaboration.Tool.service.Impl;
 
 import com.eclectics.collaboration.Tool.dto.WorkSpaceRequestDTO;
 import com.eclectics.collaboration.Tool.dto.WorkSpaceResponseDTO;
+import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.mapper.WorkSpaceMapper;
 import com.eclectics.collaboration.Tool.model.User;
 import com.eclectics.collaboration.Tool.model.WorkSpace;
@@ -22,7 +23,6 @@ import java.util.stream.Collectors;
 @Service
 public class WorkSpaceServiceImpl implements WorkSpaceService {
 
-    @Autowired
     private final WorkSpaceReposiroty workSpaceReposiroty;
     private final WorkSpaceMapper workSpaceMapper;
     private final UserRespository userRespository;
@@ -40,7 +40,7 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
                 ((UserDetails)principal).getUsername() : principal.toString();
 
         User user = userRespository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
 
         List<WorkSpace> workspaces = workSpaceReposiroty.findAllByWorkSpaceOwnerId(user);
 
@@ -53,7 +53,7 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
     @Override
     public void deleteWorkspace(Long workspaceId, User user) {
         WorkSpace ws = workSpaceReposiroty.findById(workspaceId)
-                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Workspace not found"));
 
         if (!ws.getWorkSpaceOwnerId().getId().equals(user.getId())) {
             throw new RuntimeException("You do not have permission to delete this workspace");
