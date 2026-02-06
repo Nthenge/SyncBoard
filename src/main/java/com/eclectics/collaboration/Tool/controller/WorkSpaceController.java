@@ -1,9 +1,12 @@
 package com.eclectics.collaboration.Tool.controller;
 
+import com.eclectics.collaboration.Tool.dto.InviteRequestDTO;
 import com.eclectics.collaboration.Tool.dto.WorkSpaceRequestDTO;
 import com.eclectics.collaboration.Tool.model.User;
 import com.eclectics.collaboration.Tool.model.WorkSpace;
 import com.eclectics.collaboration.Tool.security.CustomUserDetails;
+import com.eclectics.collaboration.Tool.service.EmailService;
+import com.eclectics.collaboration.Tool.service.InvitationService;
 import com.eclectics.collaboration.Tool.service.WorkSpaceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.AccessDeniedException;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/workspace")
@@ -19,6 +24,8 @@ public class WorkSpaceController {
 
     @Autowired
     private final WorkSpaceService workSpaceService;
+    private final EmailService emailService;
+    private final InvitationService invitationService;
 
     @PostMapping("/create")
     public ResponseEntity<WorkSpace> createWorkSpace(
@@ -38,5 +45,30 @@ public class WorkSpaceController {
         workSpaceService.deleteWorkspace(id, user);
 
         return ResponseEntity.ok("Workspace deleted successfully");
+    }
+
+    @PostMapping("/invite")
+    public ResponseEntity<String> inviteWorkmates(
+            @RequestBody InviteRequestDTO inviteRequest,
+            @AuthenticationPrincipal CustomUserDetails userDetails) throws AccessDeniedException {
+
+        User owner = userDetails.getUser();
+
+        emailService.inviteUsers(owner, inviteRequest);
+
+        return ResponseEntity.ok("Invitations sent successfully to: " +
+                String.join(", ", inviteRequest.getEmails()));
+    }
+
+    @PostMapping("/accept-invite")
+    public ResponseEntity<String> acceptInvite(
+            @RequestParam String token,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        User invitee = userDetails.getUser();
+
+        invitationService.acceptInvite(token, invitee);
+
+        return ResponseEntity.ok("Successfully joined the workspace!");
     }
 }
