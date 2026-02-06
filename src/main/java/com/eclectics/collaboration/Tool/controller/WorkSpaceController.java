@@ -30,29 +30,30 @@ public class WorkSpaceController {
     private final WorkSpaceService workSpaceService;
     private final EmailService emailService;
     private final InvitationService invitationService;
+    private final HttpServletRequest request;
 
     @PostMapping("/create")
-    public ResponseEntity<WorkSpace> createWorkSpace(
+    public ResponseEntity<Object> createWorkSpace(
             @RequestBody WorkSpaceRequestDTO requestDTO,
             @AuthenticationPrincipal CustomUserDetails userDetails){
         User user = userDetails.getUser();
         WorkSpace response = workSpaceService.createWorkspace(user,requestDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseHandler.generateResponse("Work space Created", HttpStatus.CREATED,response, request.getRequestURI());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteWorkSpace(
+    public ResponseEntity<Object> deleteWorkSpace(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
 
         workSpaceService.deleteWorkspace(id, user);
 
-        return ResponseEntity.ok("Workspace deleted successfully");
+        return ResponseHandler.generateResponse("Workspace deleted successfully", HttpStatus.OK, null, request.getRequestURI());
     }
 
     @PostMapping("/invite")
-    public ResponseEntity<String> inviteWorkmates(
+    public ResponseEntity<Object> inviteWorkmates(
             @RequestBody InviteRequestDTO inviteRequest,
             @AuthenticationPrincipal CustomUserDetails userDetails) throws AccessDeniedException {
 
@@ -60,12 +61,18 @@ public class WorkSpaceController {
 
         emailService.inviteUsers(owner, inviteRequest);
 
-        return ResponseEntity.ok("Invitations sent successfully to: " +
-                String.join(", ", inviteRequest.getEmails()));
+        String message = "Invitations sent successfully to: " + String.join(", ", inviteRequest.getEmails());
+
+        return ResponseHandler.generateResponse(
+                message,
+                HttpStatus.OK,
+                null,
+                request.getRequestURI()
+        );
     }
 
     @PostMapping("/accept-invite")
-    public ResponseEntity<String> acceptInvite(
+    public ResponseEntity<Object> acceptInvite(
             @RequestParam String token,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
@@ -73,11 +80,11 @@ public class WorkSpaceController {
 
         invitationService.acceptInvite(token, invitee);
 
-        return ResponseEntity.ok("Successfully joined the workspace!");
+        return ResponseHandler.generateResponse("Successfully joined the workspace",HttpStatus.ACCEPTED,null, request.getRequestURI());
     }
 
     @GetMapping("/my-workspaces")
-    public ResponseEntity<Object> getMyWorkspaces(HttpServletRequest request) {
+    public ResponseEntity<Object> getMyWorkspaces() {
         List<WorkSpaceResponseDTO> workspaces = workSpaceService.myWorkspaces();
         return ResponseHandler.generateResponse("Work spaces for logged in user", HttpStatus.OK,workspaces,request.getRequestURI());
     }
