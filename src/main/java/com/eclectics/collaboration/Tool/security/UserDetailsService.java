@@ -1,6 +1,5 @@
-package com.eclectics.collaboration.Tool.service;
+package com.eclectics.collaboration.Tool.security;
 
-import com.eclectics.collaboration.Tool.security.CustomUserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 public interface UserDetailsService {

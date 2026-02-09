@@ -12,6 +12,7 @@ import com.eclectics.collaboration.Tool.repository.UserRespository;
 import com.eclectics.collaboration.Tool.repository.WorkSpaceReposiroty;
 import com.eclectics.collaboration.Tool.service.BoardsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ public class BoardsServiceImpl implements BoardsService {
     private final BoardsRepository boardsRepository;
     private final BoardsMapper mapper;
     private final WorkSpaceReposiroty workSpaceReposiroty;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     public BoardsResponseDTO createBoard(Long workSpaceId, BoardsRequestDTO dto) {
@@ -40,7 +42,8 @@ public class BoardsServiceImpl implements BoardsService {
         Boards board = mapper.toEntity(dto, workSpace, currentUser);
 
         Boards savedBoard = boardsRepository.save(board);
-
+        String destination = "/topic/workspace/" + workSpaceId;
+        messagingTemplate.convertAndSend(destination, savedBoard);
         return mapper.toDto(savedBoard);
     }
 
@@ -51,16 +54,18 @@ public class BoardsServiceImpl implements BoardsService {
         User currentUser = userRespository.findByEmail(email)
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
 
-        Boards boards = boardsRepository.findById(boardId)
+        Boards board = boardsRepository.findById(boardId)
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Board not found"));
 
-        User workspaceOwner = boards.getWorkSpaceId().getWorkSpaceOwnerId();
+        User workspaceOwner = board.getWorkSpaceId().getWorkSpaceOwnerId();
 
         if (!workspaceOwner.getId().equals(currentUser.getId())) {
             throw new CollaborationExceptions.UnauthorizedException("You do not have permission to delete boards in this workspace");
         }
 
-        boardsRepository.delete(boards);
+        Long workSpaceId = board.getWorkSpaceId().getId();
+        boardsRepository.delete(board);
+        messagingTemplate.convertAndSend("/topic/workspace/" + workSpaceId + "/delete", boardId);
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.eclectics.collaboration.Tool.service;
+package com.eclectics.collaboration.Tool.service.Impl;
 
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.HttpMethod;
