@@ -33,3 +33,13 @@ server:
 app:
   redis:
     token-prefix: revoked_token
+
+
+logging:
+  file:
+    name=logs/backend.log
+    path=logs
+
+  level:
+    root: INFO
+    level.com.eclectics.collaboration: DEBUG
