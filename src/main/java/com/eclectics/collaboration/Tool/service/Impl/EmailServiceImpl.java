@@ -1,7 +1,6 @@
 package com.eclectics.collaboration.Tool.service.Impl;
 
 import com.eclectics.collaboration.Tool.dto.InviteRequestDTO;
-import com.eclectics.collaboration.Tool.exception.CollaborationExceptionHandler;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.model.Invitation;
 import com.eclectics.collaboration.Tool.model.User;
@@ -10,7 +9,6 @@ import com.eclectics.collaboration.Tool.repository.InvitationRepository;
 import com.eclectics.collaboration.Tool.repository.WorkSpaceReposiroty;
 import com.eclectics.collaboration.Tool.service.EmailService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
