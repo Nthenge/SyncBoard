@@ -45,13 +45,18 @@ public class BoardsServiceImpl implements BoardsService {
     }
 
     @Override
-    public void deleteBoard(Long boardId, User user) {
+    public void deleteBoard(Long boardId) {
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRespository.findByEmail(email)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
+
         Boards boards = boardsRepository.findById(boardId)
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Board not found"));
 
         User workspaceOwner = boards.getWorkSpaceId().getWorkSpaceOwnerId();
 
-        if (!workspaceOwner.getId().equals(user.getId())) {
+        if (!workspaceOwner.getId().equals(currentUser.getId())) {
             throw new CollaborationExceptions.UnauthorizedException("You do not have permission to delete boards in this workspace");
         }
 
@@ -60,6 +65,7 @@ public class BoardsServiceImpl implements BoardsService {
 
     @Override
     public List<BoardsResponseDTO> getBoardsByWorkspace(Long workSpaceId) {
+
         if (!workSpaceReposiroty.existsById(workSpaceId)) {
             throw new CollaborationExceptions.ResourceNotFoundException("Workspace not found");
         }

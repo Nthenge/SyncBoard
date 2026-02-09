@@ -10,6 +10,6 @@ import java.util.List;
 
 public interface BoardsService {
     BoardsResponseDTO createBoard(Long workSpaceId, BoardsRequestDTO dto);
-    void deleteBoard(Long boardId, User user);
+    void deleteBoard(Long boardId);
     List<BoardsResponseDTO> getBoardsByWorkspace(Long workSpaceId);
 }
