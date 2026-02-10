@@ -30,9 +30,9 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendAccountConfirmationEmail(String to, String confirmLink) {
         String subject = "Confirm your account";
-        String text = "Hi,\n\nThank you for registering!\n"
+        String text = "Hello,\n\nThank you for registering!\n"
                 + "Please confirm your account by clicking the link below:\n"
-                + confirmLink + "\n\nBest regards,\nCollaboration Tool Team";
+                + confirmLink + "\n\nBest regards,\nSYNCBOARD";
 
         sendEmail(to, subject, text);
     }
@@ -40,10 +40,10 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendPasswordResetEmail(String to, String resetLink) {
         String subject = "Reset your password";
-        String text = "Hi,\n\nWe received a request to reset your password.\n"
+        String text = "Hello,\n\nWe received a request to reset your password.\n"
                 + "You can reset your password using the link below:\n"
                 + resetLink + "\n\nIf you didn't request this, please ignore this email.\n"
-                + "Best regards,\nCollaboration Tool Team";
+                + "Best regards,\nSYNCBOARD";
 
         sendEmail(to, subject, text);
     }
