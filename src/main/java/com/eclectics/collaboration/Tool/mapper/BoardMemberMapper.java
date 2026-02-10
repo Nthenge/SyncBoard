@@ -11,9 +11,10 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface BoardMemberMapper {
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "board", source = "board")
     @Mapping(target = "user", source = "user")
-    @Mapping(target = "role", constant = "MEMBER") // default role
+    @Mapping(target = "role", constant = "MEMBER")
     BoardMember toEntity(User user, Boards board);
 
     @Mapping(target = "boardId", source = "board.id")
