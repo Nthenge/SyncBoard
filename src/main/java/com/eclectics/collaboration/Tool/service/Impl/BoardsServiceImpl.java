@@ -4,9 +4,8 @@ import com.eclectics.collaboration.Tool.dto.BoardsRequestDTO;
 import com.eclectics.collaboration.Tool.dto.BoardsResponseDTO;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.mapper.BoardsMapper;
-import com.eclectics.collaboration.Tool.model.Boards;
-import com.eclectics.collaboration.Tool.model.User;
-import com.eclectics.collaboration.Tool.model.WorkSpace;
+import com.eclectics.collaboration.Tool.model.*;
+import com.eclectics.collaboration.Tool.repository.BoardMemberRepository;
 import com.eclectics.collaboration.Tool.repository.BoardsRepository;
 import com.eclectics.collaboration.Tool.repository.UserRespository;
 import com.eclectics.collaboration.Tool.repository.WorkSpaceReposiroty;
@@ -15,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,27 +25,51 @@ public class BoardsServiceImpl implements BoardsService {
 
     private final UserRespository userRespository;
     private final BoardsRepository boardsRepository;
+    private final BoardMemberRepository boardMemberRepository;
     private final BoardsMapper mapper;
     private final WorkSpaceReposiroty workSpaceReposiroty;
     private final SimpMessagingTemplate messagingTemplate;
 
     @Override
+    @Transactional
     public BoardsResponseDTO createBoard(Long workSpaceId, BoardsRequestDTO dto) {
 
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
         User currentUser = userRespository.findByEmail(email)
-                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
+                .orElseThrow(() ->
+                        new CollaborationExceptions.ResourceNotFoundException("User not found"));
 
         WorkSpace workSpace = workSpaceReposiroty.findById(workSpaceId)
-                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Workspace not found with ID: " + workSpaceId));
+                .orElseThrow(() ->
+                        new CollaborationExceptions.ResourceNotFoundException(
+                                "Workspace not found with ID: " + workSpaceId));
+
+        if (!workSpace.getMembers().contains(currentUser)
+                && !workSpace.getWorkSpaceOwnerId().equals(currentUser)) {
+            throw new CollaborationExceptions.ForbiddenException(
+                    "You are not a member of this workspace");
+        }
 
         Boards board = mapper.toEntity(dto, workSpace, currentUser);
-
         Boards savedBoard = boardsRepository.save(board);
+
+        BoardMember boardMember = new BoardMember(
+                savedBoard,
+                currentUser,
+                BoardRole.ADMIN
+        );
+        boardMemberRepository.save(boardMember);
+
         String destination = "/topic/workspace/" + workSpaceId;
-        messagingTemplate.convertAndSend(destination, savedBoard);
+        messagingTemplate.convertAndSend(destination, mapper.toDto(savedBoard));
+
         return mapper.toDto(savedBoard);
     }
+
 
     @Override
     public void deleteBoard(Long boardId) {

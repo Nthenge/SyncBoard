@@ -1,5 +1,6 @@
 package com.eclectics.collaboration.Tool.repository;
 
+import com.eclectics.collaboration.Tool.model.BoardRole;
 import com.eclectics.collaboration.Tool.model.Boards;
 import org.springframework.data.jpa.repository.JpaRepository;
 

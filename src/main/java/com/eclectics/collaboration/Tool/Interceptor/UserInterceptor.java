@@ -1,7 +1,7 @@
 package com.eclectics.collaboration.Tool.Interceptor;
 
 import com.eclectics.collaboration.Tool.security.JwtUtil;
-import com.eclectics.collaboration.Tool.security.UserDetailsService;
+import com.eclectics.collaboration.Tool.service.UserDetailsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
