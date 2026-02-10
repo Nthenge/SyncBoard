@@ -16,5 +16,9 @@ public interface ListMapper {
 
     @Mapping(target = "boardId", source = "board.id")
     ListResponseDTO toDto(ListEntity entity);
+
+    @Mapping(target = "title", ignore = true)
+    @Mapping(target = "position", ignore = true)
+    ListEntity updateEntityFromDto(ListRequestDTO dto, ListEntity list);
 }
 

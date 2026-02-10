@@ -12,9 +12,9 @@ import org.mapstruct.Mapping;
 public interface CardMapper {
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "title", ignore = true)
     @Mapping(target = "position", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "list", source = "list")
     @Mapping(target = "createdBy", source = "user")
     Card toEntity(CardRequestDTO dto, ListEntity list, User user);
@@ -22,5 +22,12 @@ public interface CardMapper {
     @Mapping(target = "listId", source = "list.id")
     @Mapping(target = "createdById", source = "createdBy.id")
     CardResponseDTO toDto(Card entity);
+
+    @Mapping(target = "title", ignore = true)
+    @Mapping(target = "position", ignore = true)
+    @Mapping(target = "description", ignore = true)
+    @Mapping(target = "priority", ignore = true)
+    @Mapping(target = "dueDate", ignore = true)
+    Card updateEntityFromDto(CardRequestDTO dto, Card card);
 }
 

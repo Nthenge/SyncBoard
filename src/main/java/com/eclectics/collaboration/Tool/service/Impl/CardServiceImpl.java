@@ -63,5 +63,45 @@ public class CardServiceImpl implements CardService {
                 .map(cardMapper::toDto)
                 .toList();
     }
+
+    @Transactional
+    @Override
+    public CardResponseDTO updateCard(Long cardId, Long userId, CardRequestDTO dto) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Card not found"));
+
+        Boards board = card.getList().getBoard();
+
+        BoardMember member = boardMemberRepository
+                .findByBoardIdAndUserId(board.getId(), userId)
+                .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("User is not a member of the board"));
+
+        if (!card.getCreatedBy().getId().equals(userId) && member.getRole() != BoardRole.ADMIN) {
+            throw new CollaborationExceptions.UnauthorizedException("Cannot update this card");
+        }
+
+        cardMapper.updateEntityFromDto(dto, card);
+        return cardMapper.toDto(cardRepository.save(card));
+    }
+
+    @Transactional
+    @Override
+    public void deleteCard(Long cardId, Long userId) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Card not found"));
+
+        Boards board = card.getList().getBoard();
+
+        BoardMember member = boardMemberRepository
+                .findByBoardIdAndUserId(board.getId(), userId)
+                .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("User is not a member of the board"));
+
+        if (!card.getCreatedBy().getId().equals(userId) && member.getRole() != BoardRole.ADMIN) {
+            throw new CollaborationExceptions.UnauthorizedException("Cannot delete this card");
+        }
+
+        cardRepository.delete(card);
+    }
+
 }
 

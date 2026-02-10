@@ -10,6 +10,7 @@ import com.eclectics.collaboration.Tool.model.Boards;
 import com.eclectics.collaboration.Tool.model.ListEntity;
 import com.eclectics.collaboration.Tool.repository.BoardMemberRepository;
 import com.eclectics.collaboration.Tool.repository.BoardsRepository;
+import com.eclectics.collaboration.Tool.repository.CardRepository;
 import com.eclectics.collaboration.Tool.repository.ListEntityRepository;
 import com.eclectics.collaboration.Tool.service.ListService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class ListServiceImpl implements ListService {
 
     private final ListEntityRepository listRepository;
     private final BoardsRepository boardsRepository;
+    private final CardRepository cardRepository;
     private final ListMapper listMapper;
     private final BoardMemberRepository boardMemberRepository;
 
@@ -64,5 +66,48 @@ public class ListServiceImpl implements ListService {
                 .map(listMapper::toDto)
                 .toList();
     }
+
+    @Transactional
+    @Override
+    public ListResponseDTO updateList(Long listId, Long userId, ListRequestDTO dto) {
+        ListEntity list = listRepository.findById(listId)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("List not found"));
+
+        Boards board = list.getBoard();
+
+        BoardMember member = boardMemberRepository
+                .findByBoardIdAndUserId(board.getId(), userId)
+                .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("User is not a member of the board"));
+
+        if (member.getRole() != BoardRole.ADMIN) {
+            throw new CollaborationExceptions.UnauthorizedException("Only admins can update lists");
+        }
+
+
+        listMapper.updateEntityFromDto(dto, list);
+        return listMapper.toDto(listRepository.save(list));
+    }
+
+    @Transactional
+    @Override
+    public void deleteList(Long listId, Long userId) {
+        ListEntity list = listRepository.findById(listId)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("List not found"));
+
+        Boards board = list.getBoard();
+
+        BoardMember member = boardMemberRepository
+                .findByBoardIdAndUserId(board.getId(), userId)
+                .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("User is not a member of the board"));
+
+        if (member.getRole() != BoardRole.ADMIN) {
+            throw new CollaborationExceptions.UnauthorizedException("Only admins can delete lists");
+        }
+
+        list.getCards().forEach(cardRepository::delete);
+
+        listRepository.delete(list);
+    }
+
 }
 
