@@ -1,5 +1,6 @@
 package com.eclectics.collaboration.Tool.model;
 
+import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -40,6 +41,33 @@ public class BoardMember {
     private LocalDateTime joinedAt;
 
     public BoardMember(Boards board, User user, BoardRole boardRole) {
+    }
+
+    public void assertAdmin() {
+        if (this.role != BoardRole.ADMIN) {
+            throw new CollaborationExceptions.UnauthorizedException(
+                    "Only board admins can perform this action"
+            );
+        }
+    }
+
+    public static BoardMember create(User user, Boards board) {
+        BoardMember member = new BoardMember();
+        member.user = user;
+        member.board = board;
+        member.role = BoardRole.MEMBER;
+        return member;
+    }
+
+    public void changeRole(BoardRole newRole) {
+        if (this.role == newRole) {
+            return;
+        }
+        this.role = newRole;
+    }
+
+    public boolean isAdmin() {
+        return this.role == BoardRole.ADMIN;
     }
 }
 

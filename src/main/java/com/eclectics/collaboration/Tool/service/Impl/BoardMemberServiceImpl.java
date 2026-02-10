@@ -38,9 +38,7 @@ public class BoardMemberServiceImpl implements BoardMemberService {
                 .findByBoardIdAndUserId(boardId, requesterId)
                 .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("Not a board member"));
 
-        if (requester.getRole() != BoardRole.ADMIN) {
-            throw new CollaborationExceptions.UnauthorizedException("Only board admins can add members");
-        }
+        requester.assertAdmin();
 
         List<BoardMember> membersToSave = new ArrayList<>();
 
@@ -49,14 +47,9 @@ public class BoardMemberServiceImpl implements BoardMemberService {
             User user = userRespository.findById(userId)
                     .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
 
-            if (!board.getWorkSpaceId().getMembers().contains(user)) {
-                throw new CollaborationExceptions.ForbiddenException("User is not a workspace member");
-            }
+            board.assertWorkspaceMember(user);
 
-            if (!boardMemberRepository.existsByBoardIdAndUserId(boardId, userId)) {
-                BoardMember member = mapper.toEntity(user, board);
-                membersToSave.add(member);
-            }
+            board.addMember(user);
         }
 
         List<BoardMember> savedMembers = boardMemberRepository.saveAll(membersToSave);
@@ -69,29 +62,30 @@ public class BoardMemberServiceImpl implements BoardMemberService {
     @Override
     public void removeMember(Long boardId, Long requesterId, Long targetUserId) {
 
+        Boards board = boardsRepository.findById(boardId)
+                .orElseThrow(() ->
+                        new CollaborationExceptions.ResourceNotFoundException("Board not found"));
+
         BoardMember requester = boardMemberRepository
                 .findByBoardIdAndUserId(boardId, requesterId)
-                .orElseThrow(() -> new CollaborationExceptions.BadRequestException("Not a board member"));
+                .orElseThrow(() ->
+                        new CollaborationExceptions.BadRequestException("Not a board member"));
 
-        if (requester.getRole() != BoardRole.ADMIN) {
-            throw new CollaborationExceptions.UnauthorizedException("Only admins can remove members");
-        }
+        requester.assertAdmin();
 
         BoardMember target = boardMemberRepository
                 .findByBoardIdAndUserId(boardId, targetUserId)
-                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Target not found"));
+                .orElseThrow(() ->
+                        new CollaborationExceptions.ResourceNotFoundException("Target not found"));
 
-        if (target.getRole() == BoardRole.ADMIN) {
-            long adminCount =
-                    boardMemberRepository.countByBoardIdAndRole(boardId, BoardRole.ADMIN);
+        long adminCount =
+                boardMemberRepository.countByBoardIdAndRole(boardId, BoardRole.ADMIN);
 
-            if (adminCount <= 1) {
-                throw new CollaborationExceptions.ForbiddenException("Board must have at least one admin");
-            }
-        }
+        board.assertMemberCanBeRemoved(target, adminCount);
 
         boardMemberRepository.delete(target);
     }
+
 
     @Override
     public void changeRole(
@@ -105,14 +99,12 @@ public class BoardMemberServiceImpl implements BoardMemberService {
                 .findByBoardIdAndUserId(boardId, requesterId)
                 .orElseThrow(() -> new CollaborationExceptions.BadRequestException("Not a board member"));
 
-        if (requester.getRole() != BoardRole.ADMIN) {
-            throw new CollaborationExceptions.ForbiddenException("Only admins can change roles");
-        }
+        requester.assertAdmin();
 
         BoardMember target = boardMemberRepository
                 .findByBoardIdAndUserId(boardId, targetUserId)
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Target not found"));
 
-        target.setRole(newRole);
+        target.changeRole(newRole);
     }
 }
