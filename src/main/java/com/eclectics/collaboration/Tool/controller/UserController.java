@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserController {
 
     private final UserService userService;
-    private HttpServletRequest request;
+    private final HttpServletRequest request;
 
     @PostMapping("/register")
     public ResponseEntity<Object> registerUser(
@@ -24,7 +24,7 @@ public class UserController {
             @RequestPart(value = "avatarUrl", required = false) MultipartFile avatarUrl
     )throws java.io.IOException {
         UserRegistrationResponseDTO response = userService.createUser(requestDTO,avatarUrl);
-        return ResponseHandler.generateResponse("Registration successful", HttpStatus.CREATED,response,request.getRequestURI());
+        return ResponseHandler.generateResponse("Registration successful, open email and confirm your account", HttpStatus.CREATED,response,request.getRequestURI());
     }
 
     @PostMapping("/login")
@@ -67,7 +67,7 @@ public class UserController {
     ) {
         String token = tokenHeader.replace("Bearer ", "");
         UserRegistrationRequestDTO response = userService.updateUser(token, userDTO);
-        return ResponseHandler.generateResponse("User updated successfully",HttpStatus.CREATED,null, request.getRequestURI());
+        return ResponseHandler.generateResponse("User updated successfully",HttpStatus.CREATED, response, request.getRequestURI());
     }
 
     @PutMapping("/logout")

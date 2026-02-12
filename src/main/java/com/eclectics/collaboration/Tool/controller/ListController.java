@@ -20,7 +20,7 @@ import java.util.List;
 public class ListController {
 
     private final ListService listService;
-    private HttpServletRequest request;
+    private final HttpServletRequest request;
 
     @PostMapping("/create")
     public ResponseEntity<Object> createList(

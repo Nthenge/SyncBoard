@@ -26,7 +26,10 @@ public class User {
     private String sirName;
     private String email;
     private String password;
+
+    @Column(name = "avatarUrl", nullable = true)
     private String avatarUrl;
+
     private LocalDateTime createdAt;
     private boolean enabled = false;
 
