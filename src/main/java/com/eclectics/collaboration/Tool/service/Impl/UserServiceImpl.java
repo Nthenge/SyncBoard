@@ -94,15 +94,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserEmailDTO userSendResetPassword(UserEmailDTO userEmailDTO) {
-
-        userRepository.findByEmail(userEmailDTO.getEmail())
-                .ifPresent(user -> {
+        return userRepository.findByEmail(userEmailDTO.getEmail())
+                .map(user -> {
                     String resetToken = jwtUtil.generateResetPasswordToken(user.getEmail());
                     String resetLink = "https://yourapp.com/reset-password?token=" + resetToken;
-                    emailService.sendPasswordResetEmail(user.getEmail(), resetLink);
-                });
 
-        return userEmailDTO;
+                    emailService.sendPasswordResetEmail(user.getEmail(), resetLink);
+
+                    userEmailDTO.setToken(resetToken);
+                    return userEmailDTO;
+                })
+                .orElse(userEmailDTO);
     }
 
     @Override
