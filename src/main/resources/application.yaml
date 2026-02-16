@@ -6,14 +6,13 @@ spring:
   session:
     jdbc:
       initialize-schema: always
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        default_schema: public
+
+server:
+  address: 0.0.0.0
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,application/json
+    min-response-size: 1024
 
 springdoc:
   api-docs:
@@ -21,25 +20,18 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-server:
-  address: 0.0.0.0
-  ssl:
-    enabled: false
-  compression:
-    enabled: true
-    mime-types: text/html,text/xml,text/plain,application/json
-    min-response-size: 1024
-
 app:
   redis:
     token-prefix: revoked_token
-
+  message: "This is the default message"
 
 logging:
   file:
-    name=logs/backend.log
-    path=logs
-
+    name: logs/backend.log
+    path: logs
   level:
     root: INFO
     level.com.eclectics.collaboration: DEBUG
+
+jwt:
+  secret: ${JWT_SECRET}
