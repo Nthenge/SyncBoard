@@ -6,6 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,6 +19,8 @@ import java.util.List;
 @NoArgsConstructor
 @Entity
 @Table(name = "users")
+@SQLDelete(sql = "UPDATE users SET deleted = true WHERE id = ?")
+@SQLRestriction("deleted = false")
 public class User {
 
     @Id
@@ -26,7 +31,7 @@ public class User {
     private String sirName;
     private String email;
     private String password;
-
+    private boolean deleted = false;
     @Column(name = "avatarUrl", nullable = true)
     private String avatarUrl;
 

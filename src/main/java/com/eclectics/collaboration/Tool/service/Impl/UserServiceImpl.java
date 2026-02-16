@@ -121,7 +121,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserRegistrationRequestDTO updateUser(String token, UserRegistrationRequestDTO userDTO) {
-
         String email = jwtUtil.extractEmail(token);
 
         User existingUser = userRepository.findByEmail(email)
@@ -129,9 +128,9 @@ public class UserServiceImpl implements UserService {
 
         if (userDTO.getFirstName() != null) existingUser.setFirstName(userDTO.getFirstName());
         if (userDTO.getSirName() != null) existingUser.setSirName(userDTO.getSirName());
+        if (userDTO.getAvatarUrl() != null) existingUser.setAvatarUrl(userDTO.getAvatarUrl());
 
         User updatedUser = userRepository.save(existingUser);
-
         return mapper.toResponse(updatedUser);
     }
 
@@ -149,32 +148,47 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void userDeleteAccount(String token) {
+        String jwt = token.startsWith("Bearer ") ? token.substring(7) : token;
+        String tokenId = jwtUtil.extractId(jwt);
 
-        String email = jwtUtil.extractEmail(token);
+        Boolean isRevoked = redisTemplate.hasKey("revoked_token:" + tokenId);
+        if (Boolean.TRUE.equals(isRevoked)) {
+            throw new CollaborationExceptions.UnauthorizedException("Session expired. Please log in again.");
+        }
 
+        String email = jwtUtil.extractEmail(jwt);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
 
         userRepository.delete(user);
+
+        SecurityContextHolder.clearContext();
     }
 
     @Override
-    public void logOutUser(String token) {
-        if (token != null && token.startsWith("Bearer ")) {
-            String jwt = token.substring(7);
+    public void logOutUser(String tokenHeader) {
+        if (tokenHeader != null && tokenHeader.startsWith("Bearer ")) {
+            String jwt = tokenHeader.substring(7);
 
-            String tokenId = jwtUtil.extractId(jwt);
-            Date expiration = jwtUtil.extractExpiration(jwt);
-            long ttl = expiration.getTime() - System.currentTimeMillis();
+            try {
+                String tokenId = jwtUtil.extractId(jwt);
+                Date expiration = jwtUtil.extractExpiration(jwt);
 
-            if (ttl > 0) {
-                redisTemplate.opsForValue().set(
-                        "revoked_token:" + tokenId,
-                        "true",
-                        Duration.ofMillis(ttl)
-                );
+                long ttl = expiration.getTime() - System.currentTimeMillis();
+
+                if (ttl > 0) {
+                    redisTemplate.opsForValue().set(
+                            "revoked_token:" + tokenId,
+                            "true",
+                            Duration.ofMillis(ttl)
+                    );
+                    System.out.println("Token blacklisted in Redis. ID: " + tokenId);
+                }
+            } catch (Exception e) {
+                System.err.println("Could not blacklist token: " + e.getMessage());
             }
         }
+
         SecurityContextHolder.clearContext();
     }
 }
