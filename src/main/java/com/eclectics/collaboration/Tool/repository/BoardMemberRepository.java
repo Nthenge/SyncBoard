@@ -5,6 +5,7 @@ import com.eclectics.collaboration.Tool.model.BoardRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,5 +19,7 @@ public interface BoardMemberRepository extends JpaRepository<BoardMember, Long> 
     List<BoardMember> findByBoardId(Long boardId);
 
     long countByBoardIdAndRole(Long boardId, BoardRole role);
+
+    List<BoardMember> findAllByUserId(Long userId);
 }
 

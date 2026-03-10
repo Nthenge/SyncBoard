@@ -2,7 +2,7 @@ spring:
   application:
     name: collaborationTool
   profiles:
-    active: prod
+    active: dev
   session:
     jdbc:
       initialize-schema: always

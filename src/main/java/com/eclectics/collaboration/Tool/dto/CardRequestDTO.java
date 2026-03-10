@@ -15,11 +15,11 @@ import java.time.LocalDateTime;
 
 public class CardRequestDTO {
 
+    private Long listId;
     private String title;
     private String description;
     private Priority priority;
     private LocalDateTime dueDate;
     private Integer position;
-
 }
 

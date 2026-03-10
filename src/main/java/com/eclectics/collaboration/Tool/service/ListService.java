@@ -16,4 +16,7 @@ public interface ListService {
 
     @Transactional
     void deleteList(Long listId, Long userId);
+
+    @Transactional
+    List<ListResponseDTO> reorderLists(Long boardId, List<Long> listIds, Long userId);
 }

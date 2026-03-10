@@ -13,6 +13,7 @@ public class ListRequestDTO {
 
     private String title;
     private Integer position;
+    private Long boardId;
 
 }
 

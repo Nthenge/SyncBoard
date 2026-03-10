@@ -1,5 +1,6 @@
 package com.eclectics.collaboration.Tool.controller;
 
+import com.eclectics.collaboration.Tool.dto.InvitationResponseDTO;
 import com.eclectics.collaboration.Tool.dto.InviteRequestDTO;
 import com.eclectics.collaboration.Tool.dto.WorkSpaceRequestDTO;
 import com.eclectics.collaboration.Tool.dto.WorkSpaceResponseDTO;
@@ -80,13 +81,73 @@ public class WorkSpaceController {
 
         invitationService.acceptInvite(token, invitee);
 
-        return ResponseHandler.generateResponse("Successfully joined the workspace",HttpStatus.ACCEPTED,null, request.getRequestURI());
+        return ResponseHandler.generateResponse(
+                "Successfully joined the workspace",
+                HttpStatus.ACCEPTED,
+                null,
+                request.getRequestURI()
+        );
+    }
+
+    // POST /reject-invite?token=xxx
+    @PostMapping("/reject-invite")
+    public ResponseEntity<Object> rejectInvite(
+            @RequestParam String token,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        User invitee = userDetails.getUser();
+
+        invitationService.rejectInvite(token, invitee);
+
+        return ResponseHandler.generateResponse(
+                "Invitation declined successfully",
+                HttpStatus.OK,
+                null,
+                request.getRequestURI()
+        );
     }
 
     @GetMapping("/my-workspaces")
     public ResponseEntity<Object> getMyWorkspaces() {
         List<WorkSpaceResponseDTO> workspaces = workSpaceService.myWorkspaces();
         return ResponseHandler.generateResponse("Work spaces for logged in user", HttpStatus.OK,workspaces,request.getRequestURI());
+    }
+
+    // DELETE /invitations/{invitationId}
+    @DeleteMapping("/invitations/{invitationId}")
+    public ResponseEntity<Object> deleteInvitation(
+            @PathVariable Long invitationId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        User requester = userDetails.getUser();
+
+        invitationService.deleteInvitation(invitationId, requester);
+
+        return ResponseHandler.generateResponse(
+                "Invitation deleted successfully",
+                HttpStatus.OK,
+                null,
+                request.getRequestURI()
+        );
+    }
+
+    // GET /workspaces/{workspaceId}/invitations
+    @GetMapping("/workspaces/{workspaceId}/invitations")
+    public ResponseEntity<Object> getWorkspaceInvitations(
+            @PathVariable Long workspaceId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        User requester = userDetails.getUser();
+
+        List<InvitationResponseDTO> invitations =
+                invitationService.getWorkspaceInvitations(workspaceId, requester);
+
+        return ResponseHandler.generateResponse(
+                "Workspace invitations fetched successfully",
+                HttpStatus.OK,
+                invitations,
+                request.getRequestURI()
+        );
     }
 
 }

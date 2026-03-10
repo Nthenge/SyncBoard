@@ -1,5 +1,6 @@
 package com.eclectics.collaboration.Tool.service.Impl;
 
+import com.eclectics.collaboration.Tool.dto.CardMoveRequestDTO;
 import com.eclectics.collaboration.Tool.dto.CardRequestDTO;
 import com.eclectics.collaboration.Tool.dto.CardResponseDTO;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
@@ -23,6 +24,8 @@ public class CardServiceImpl implements CardService {
     private final CardMapper cardMapper;
     private final BoardMemberRepository boardMemberRepository;
     private final CardAssigneeRepository cardAssigneeRepository;
+
+    // ─── CREATE ───────────────────────────────────────────────────────────────
 
     @Override
     @Transactional
@@ -55,13 +58,12 @@ public class CardServiceImpl implements CardService {
 
         Card savedCard = cardRepository.save(card);
 
-        cardAssigneeRepository.save(
-                new CardAssignee(savedCard, user)
-        );
+        cardAssigneeRepository.save(new CardAssignee(savedCard, user));
 
         return cardMapper.toDto(savedCard);
     }
 
+    // ─── READ ─────────────────────────────────────────────────────────────────
 
     @Override
     public List<CardResponseDTO> getCardsByList(Long listId) {
@@ -71,17 +73,29 @@ public class CardServiceImpl implements CardService {
                 .toList();
     }
 
+    @Override
+    public CardResponseDTO getCardById(Long cardId) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() ->
+                        new CollaborationExceptions.ResourceNotFoundException("Card not found"));
+        return cardMapper.toDto(card);
+    }
+
+    // ─── UPDATE ───────────────────────────────────────────────────────────────
+
     @Transactional
     @Override
     public CardResponseDTO updateCard(Long cardId, Long userId, CardRequestDTO dto) {
         Card card = cardRepository.findById(cardId)
-                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Card not found"));
+                .orElseThrow(() ->
+                        new CollaborationExceptions.ResourceNotFoundException("Card not found"));
 
         Boards board = card.getList().getBoard();
 
         BoardMember member = boardMemberRepository
                 .findByBoardIdAndUserId(board.getId(), userId)
-                .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("User is not a member of the board"));
+                .orElseThrow(() ->
+                        new CollaborationExceptions.ForbiddenException("User is not a member of the board"));
 
         if (!card.getCreatedBy().getId().equals(userId) && member.getRole() != BoardRole.ADMIN) {
             throw new CollaborationExceptions.UnauthorizedException("Cannot update this card");
@@ -91,17 +105,80 @@ public class CardServiceImpl implements CardService {
         return cardMapper.toDto(cardRepository.save(card));
     }
 
+    // ─── MOVE ─────────────────────────────────────────────────────────────────
+
+    @Transactional
+    @Override
+    public CardResponseDTO moveCard(Long cardId, CardMoveRequestDTO dto, Long userId) {
+
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() ->
+                        new CollaborationExceptions.ResourceNotFoundException("Card not found"));
+
+        // Validate user is a member of the source board
+        Boards sourceBoard = card.getList().getBoard();
+        boardMemberRepository
+                .findByBoardIdAndUserId(sourceBoard.getId(), userId)
+                .orElseThrow(() ->
+                        new CollaborationExceptions.ForbiddenException("User is not a member of the board"));
+
+        ListEntity targetList = listRepository.findById(dto.getTargetListId())
+                .orElseThrow(() ->
+                        new CollaborationExceptions.ResourceNotFoundException("Target list not found"));
+
+        // If moving across boards, verify membership on target board too
+        Boards targetBoard = targetList.getBoard();
+        if (!targetBoard.getId().equals(sourceBoard.getId())) {
+            boardMemberRepository
+                    .findByBoardIdAndUserId(targetBoard.getId(), userId)
+                    .orElseThrow(() ->
+                            new CollaborationExceptions.ForbiddenException("User is not a member of the target board"));
+        }
+
+        // Shift positions in the target list to make room at newIndex
+        List<Card> targetCards = cardRepository.findByListIdOrderByPosition(dto.getTargetListId());
+
+        // Remove the card from source list and compact positions
+        List<Card> sourceCards = cardRepository.findByListIdOrderByPosition(card.getList().getId());
+        sourceCards.remove(card);
+        for (int i = 0; i < sourceCards.size(); i++) {
+            sourceCards.get(i).setPosition(i + 1);
+        }
+        cardRepository.saveAll(sourceCards);
+
+        // Insert card at newIndex in target list
+        int insertAt = (dto.getNewIndex() != null)
+                ? Math.min(dto.getNewIndex(), targetCards.size())
+                : targetCards.size();
+
+        targetCards.add(insertAt, card);
+        for (int i = 0; i < targetCards.size(); i++) {
+            targetCards.get(i).setPosition(i + 1);
+        }
+        cardRepository.saveAll(targetCards);
+
+        // Update the card's list reference
+        card.setList(targetList);
+        card.setPosition(insertAt + 1);
+
+        return cardMapper.toDto(cardRepository.save(card));
+    }
+
+    // ─── DELETE ───────────────────────────────────────────────────────────────
+
     @Transactional
     @Override
     public void deleteCard(Long cardId, Long userId) {
         Card card = cardRepository.findById(cardId)
-                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Card not found"));
+                .orElseThrow(() ->
+                        new CollaborationExceptions.ResourceNotFoundException("Card not found"));
 
         Boards board = card.getList().getBoard();
 
         BoardMember member = boardMemberRepository
                 .findByBoardIdAndUserId(board.getId(), userId)
-                .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("User is not a member of the board"));
+                .orElseThrow(() ->
+                        new CollaborationExceptions.ForbiddenException("User is not a member of the board"));
 
         if (!card.getCreatedBy().getId().equals(userId) && member.getRole() != BoardRole.ADMIN) {
             throw new CollaborationExceptions.UnauthorizedException("Cannot delete this card");
@@ -109,6 +186,4 @@ public class CardServiceImpl implements CardService {
 
         cardRepository.delete(card);
     }
-
 }
-

@@ -26,7 +26,6 @@ public class EmailServiceImpl implements EmailService {
     private final WorkSpaceReposiroty workspaceRepository;
     private final InvitationRepository invitationRepository;
 
-
     @Override
     public void sendAccountConfirmationEmail(String to, String confirmLink) {
         String subject = "Confirm your account";
@@ -46,14 +45,6 @@ public class EmailServiceImpl implements EmailService {
                 + "Best regards,\nSYNCBOARD";
 
         sendEmail(to, subject, text);
-    }
-
-    private void sendEmail(String to, String subject, String text) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(text);
-        mailSender.send(message);
     }
 
     @Transactional
@@ -81,11 +72,36 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
+    @Override
     public void sendInvitationEmail(String to, String token, String workspaceName) {
+        String subject = "You're invited to " + workspaceName;
+        String text = "Hello,\n\n"
+                + "You've been invited to join the workspace: " + workspaceName + "\n\n"
+                + "Accept:  http://yourapp.com/accept-invite?token=" + token + "\n"
+                + "Decline: http://yourapp.com/reject-invite?token=" + token + "\n\n"
+                + "This invite expires in 7 days.\n\n"
+                + "Best regards,\nSYNCBOARD";
+
+        sendEmail(to, subject, text);
+    }
+
+    @Override
+    public void sendInviteRejectedEmail(String ownerEmail, String inviteeEmail, String workspaceName) {
+        String subject = "Invite declined. " + workspaceName;
+        String text = "Hello,\n\n"
+                + inviteeEmail + " has declined your invitation to join the workspace: "
+                + workspaceName + ".\n\n"
+                + "You may invite someone else if needed.\n\n"
+                + "Best regards,\nSYNCBOARD";
+
+        sendEmail(ownerEmail, subject, text);
+    }
+
+    private void sendEmail(String to, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
-        message.setSubject("You're invited to " + workspaceName);
-        message.setText("Click here to join: http://yourapp.com/accept-invite?token=" + token);
+        message.setSubject(subject);
+        message.setText(text);
         mailSender.send(message);
     }
 }
