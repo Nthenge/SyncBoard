@@ -51,21 +51,22 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(requestDTO.getPassword()));
         user.setEnabled(false);
         user.setCreatedAt(now);
-
-        if ( avatarUrl!= null && !avatarUrl.isEmpty()) {
-            String ext = getFileExtension(avatarUrl.getOriginalFilename());
-            String path = "SYNCBOARD/avatar/" + user.getId() + "-" + UUID.randomUUID() + ext;
-            user.setAvatarUrl(ossService.uploadFile(path, avatarUrl.getInputStream()));
-        }
-
         User savedUser = userRepository.save(user);
 
+        if (avatarUrl != null && !avatarUrl.isEmpty()) {
+            String ext = getFileExtension(avatarUrl.getOriginalFilename());
+
+            String path = "SYNCBOARD/avatar/" + savedUser.getId() + "-" + UUID.randomUUID() + ext;
+            String uploadedUrl = ossService.uploadFile(path, avatarUrl.getInputStream());
+            savedUser.setAvatarUrl(uploadedUrl);
+            userRepository.save(savedUser);
+        }
         String token = jwtUtil.generateEmailConfirmationToken(savedUser.getEmail());
         String confirmLink = "https://yourapp.com/confirm-account?token=" + token;
 
-        try{
+        try {
             emailService.sendAccountConfirmationEmail(savedUser.getEmail(), confirmLink);
-        }catch (Exception e) {
+        } catch (Exception e) {
             UserServiceImpl.log.error("Failed to send Email to user, but user saved", e);
         }
 

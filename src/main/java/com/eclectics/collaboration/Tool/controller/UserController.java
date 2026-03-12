@@ -6,6 +6,7 @@ import com.eclectics.collaboration.Tool.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,11 +19,11 @@ public class UserController {
     private final UserService userService;
     private final HttpServletRequest request;
 
-    @PostMapping("/register")
+    @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Object> registerUser(
-            @RequestPart("user") UserRegistrationRequestDTO requestDTO,
-            @RequestPart(value = "avatarUrl", required = false) MultipartFile avatarUrl
-    )throws java.io.IOException {
+            @ModelAttribute UserRegistrationRequestDTO requestDTO, // Maps individual fields
+            @RequestParam(value = "avatarUrl", required = false) MultipartFile avatarUrl
+    ) throws java.io.IOException {
         UserRegistrationResponseDTO response = userService.createUser(requestDTO,avatarUrl);
         return ResponseHandler.generateResponse("Registration successful, open email and confirm your account", HttpStatus.CREATED,response,request.getRequestURI());
     }
