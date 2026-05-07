@@ -46,7 +46,7 @@ public class UserController {
         return ResponseHandler.generateResponse("Account confirmed successfully",HttpStatus.CREATED,null,request.getRequestURI());
     }
 
-    @PostMapping("/reset-password/request")
+    @PostMapping("/reset-password-request")
     public ResponseEntity<Object> sendResetPasswordEmail(
             @RequestBody UserEmailDTO userEmailDTO
     ) {
