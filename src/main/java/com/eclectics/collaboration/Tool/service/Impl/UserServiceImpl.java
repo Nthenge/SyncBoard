@@ -90,7 +90,7 @@ public class UserServiceImpl implements UserService {
 
         String token = jwtUtil.generateToken(user.getEmail());
 
-        return new UserLoginResponseDTO(user.getId(), user.getEmail(), token,user.getFirstName());
+        return new UserLoginResponseDTO(user.getId(), user.getEmail(), token, user.getFirstName());
     }
 
     @Override
@@ -98,7 +98,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByEmail(userEmailDTO.getEmail())
                 .map(user -> {
                     String resetToken = jwtUtil.generateResetPasswordToken(user.getEmail());
-                    String resetLink = "https://yourapp.com/reset-password?token=" + resetToken;
+                    String resetLink = "https:// https://syncboard-frontend-814g.onrender.com/reset-password?token=" + resetToken;
 
                     emailService.sendPasswordResetEmail(user.getEmail(), resetLink);
 
