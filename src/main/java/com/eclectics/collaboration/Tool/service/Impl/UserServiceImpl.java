@@ -62,7 +62,7 @@ public class UserServiceImpl implements UserService {
             userRepository.save(savedUser);
         }
         String token = jwtUtil.generateEmailConfirmationToken(savedUser.getEmail());
-        String confirmLink = "https://yourapp.com/confirm-account?token=" + token;
+        String confirmLink = "https:// https://syncboard-frontend-814g.onrender.com/confirm-account?token=" + token;
 
         try {
             emailService.sendAccountConfirmationEmail(savedUser.getEmail(), confirmLink);

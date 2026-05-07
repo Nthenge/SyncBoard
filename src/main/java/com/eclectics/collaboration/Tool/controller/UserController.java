@@ -19,13 +19,15 @@ public class UserController {
     private final UserService userService;
     private final HttpServletRequest request;
 
-    @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> registerUser(
-            @RequestPart("user") UserRegistrationRequestDTO requestDTO,
-            @RequestPart(value = "avatarUrl", required = false) MultipartFile avatarUrl
+            @RequestBody UserRegistrationRequestDTO requestDTO
     ) throws java.io.IOException {
-        UserRegistrationResponseDTO response = userService.createUser(requestDTO,avatarUrl);
-        return ResponseHandler.generateResponse("Registration successful, open email and confirm your account", HttpStatus.CREATED,response,request.getRequestURI());
+        UserRegistrationResponseDTO response = userService.createUser(requestDTO, null);
+        return ResponseHandler.generateResponse(
+                "Registration successful, open email and confirm your account",
+                HttpStatus.CREATED, response, request.getRequestURI()
+        );
     }
 
     @PostMapping("/login")
