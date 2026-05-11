@@ -18,6 +18,13 @@ spring:
     port: ${MAIL_TRAP_PORT}
     username: ${MAIL_TRAP_USERID}
     password: ${MAIL_TRAP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth=true:
+        starttls:
+          enable: true
+          required: true
 
 server:
   port: 8084
