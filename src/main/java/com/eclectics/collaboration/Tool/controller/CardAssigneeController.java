@@ -8,7 +8,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/cards/{cardId}/assignees")
+@RequestMapping("/cards/{cardId}/assignees")
 public class CardAssigneeController {
 
     private final CardAssigneeService cardAssigneeService;

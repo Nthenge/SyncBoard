@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v2.0")
+@RequestMapping("/boards")
 @RequiredArgsConstructor
 public class BoardController {
 
@@ -24,7 +24,7 @@ public class BoardController {
     private final HttpServletRequest request;
 
     // GET /boards
-    @GetMapping("/boards")
+    @GetMapping()
     public ResponseEntity<Object> getAllBoards(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
@@ -39,7 +39,7 @@ public class BoardController {
     }
 
     // GET /boards/{boardId}
-    @GetMapping("/boards/{boardId}")
+    @GetMapping("/{boardId}")
     public ResponseEntity<Object> getBoardById(
             @PathVariable Long boardId) {
 
@@ -54,7 +54,7 @@ public class BoardController {
     }
 
     // POST /boards  (workspaceId comes from request body)
-    @PostMapping("/boards")
+    @PostMapping()
     public ResponseEntity<Object> createBoard(
             @RequestBody BoardsRequestDTO dto) {
 
@@ -69,7 +69,7 @@ public class BoardController {
     }
 
     // PUT /boards/{boardId}
-    @PutMapping("/boards/{boardId}")
+    @PutMapping("/{boardId}")
     public ResponseEntity<Object> updateBoard(
             @PathVariable Long boardId,
             @RequestBody BoardsRequestDTO dto) {
@@ -85,7 +85,7 @@ public class BoardController {
     }
 
     // DELETE /boards/{boardId}
-    @DeleteMapping("/boards/{boardId}")
+    @DeleteMapping("/{boardId}")
     public ResponseEntity<Object> deleteBoard(
             @PathVariable Long boardId) {
 

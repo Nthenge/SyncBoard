@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v2.0")
+@RequestMapping("/boards")
 @RequiredArgsConstructor
 public class ListController {
 
@@ -24,7 +24,7 @@ public class ListController {
     private final HttpServletRequest request;
 
     // GET /boards/{boardId}/lists
-    @GetMapping("/boards/{boardId}/lists")
+    @GetMapping("/{boardId}/lists")
     public ResponseEntity<Object> getLists(
             @PathVariable Long boardId) {
 
@@ -84,7 +84,7 @@ public class ListController {
     }
 
     // PUT /boards/{boardId}/lists/reorder
-    @PutMapping("/boards/{boardId}/lists/reorder")
+    @PutMapping("/{boardId}/lists/reorder")
     public ResponseEntity<Object> reorderLists(
             @PathVariable Long boardId,
             @RequestBody ReorderListsRequestDTO dto,
