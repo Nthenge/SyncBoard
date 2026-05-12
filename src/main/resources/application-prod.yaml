@@ -14,17 +14,18 @@ spring:
         format_sql: true
         default_schema: public
   mail:
-    host: ${MAIL_TRAP_HOST}
-    port: ${MAIL_TRAP_PORT}
-    username: ${MAIL_TRAP_USERID}
-    password: ${MAIL_TRAP_PASSWORD}
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
-          auth=true:
-        starttls:
-          enable: true
-          required: true
+          auth: true
+          starttls:
+            enable: true
+            required: true
+        debug: false
 
 server:
   port: 8084

@@ -9,6 +9,7 @@ import com.eclectics.collaboration.Tool.repository.InvitationRepository;
 import com.eclectics.collaboration.Tool.repository.WorkSpaceReposiroty;
 import com.eclectics.collaboration.Tool.service.EmailService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,9 @@ public class EmailServiceImpl implements EmailService {
     private final JavaMailSender mailSender;
     private final WorkSpaceReposiroty workspaceRepository;
     private final InvitationRepository invitationRepository;
+
+    @Value("${spring.mail.username}")
+    private String fromEmail;
 
     @Override
     public void sendAccountConfirmationEmail(String to, String confirmLink) {
@@ -99,6 +103,7 @@ public class EmailServiceImpl implements EmailService {
 
     private void sendEmail(String to, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
         message.setTo(to);
         message.setSubject(subject);
         message.setText(text);
