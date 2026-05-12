@@ -77,8 +77,8 @@ public class EmailServiceImpl implements EmailService {
         String subject = "You're invited to " + workspaceName;
         String text = "Hello,\n\n"
                 + "You've been invited to join the workspace: " + workspaceName + "\n\n"
-                + "Accept:  http://https://syncboard-frontend-814g.onrender.com/accept-invite?token=" + token + "\n"
-                + "Decline: http://https://syncboard-frontend-814g.onrender.com/reject-invite?token=" + token + "\n\n"
+                + "Accept:  http://syncboard-frontend-814g.onrender.com/accept-invite?token=" + token + "\n"
+                + "Decline: http://syncboard-frontend-814g.onrender.com/reject-invite?token=" + token + "\n\n"
                 + "This invite expires in 7 days.\n\n"
                 + "Best regards,\nSYNCBOARD";
 
