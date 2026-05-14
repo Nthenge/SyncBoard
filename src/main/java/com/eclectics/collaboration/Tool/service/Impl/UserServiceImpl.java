@@ -98,7 +98,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByEmail(userEmailDTO.getEmail())
                 .map(user -> {
                     String resetToken = jwtUtil.generateResetPasswordToken(user.getEmail());
-                    String resetLink = "https:// https://syncboard-frontend-814g.onrender.com/reset-password?token=" + resetToken;
+                    String resetLink = "https://syncboard-frontend-814g.onrender.com/reset-password?token=" + resetToken;
 
                     emailService.sendPasswordResetEmail(user.getEmail(), resetLink);
 
