@@ -25,6 +25,10 @@ spring:
           starttls:
             enable: true
             required: true
+brevo:
+  api-key: ${BREVO_API_KEY}
+  from-email: ${BREVO_FROM_EMAIL}
+  from-name: ${BREVO_FROM_NAME}
 
 server:
   port: 8084

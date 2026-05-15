@@ -18,6 +18,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.file.AccessDeniedException;
@@ -35,6 +36,9 @@ public class EmailServiceImpl implements EmailService {
 
     @Value("${spring.mail.username}")
     private String fromEmail;
+
+    @Value("${brevo.api-key}")
+    private String brevoApiKey;
 
     @Override
     public void sendAccountConfirmationEmail(String to, String confirmLink) {
@@ -162,19 +166,27 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private void sendEmail(String to, String subject, String text) {
-        try {
-            log.info("Attempting to send email to: {}", to);
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom("syncboardke@gmail.com", "SYNCBOARD KENYA");
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(text, true); // true = isHtml
-            log.info("Email sent successfully to: {}", to);
-            mailSender.send(message);
-        } catch (MessagingException | UnsupportedEncodingException e) {
-            log.error("Email sending failed to: {} — reason: {}", to, e.getMessage(), e);
-            throw new RuntimeException("Failed to send email to: " + to, e);
-        }
+        log.info("Attempting to send email to: {}", to);
+
+        String body = """
+            {
+                "sender": {"name": "SYNCBOARD KENYA", "email": "syncboardke@gmail.com"},
+                "to": [{"email": "%s"}],
+                "subject": "%s",
+                "htmlContent": "%s"
+            }
+            """.formatted(to, subject, text.replace("\"", "\\\"").replace("\n", "\\n"));
+
+        WebClient client = WebClient.create();
+        client.post()
+                .uri("https://api.brevo.com/v3/smtp/email")
+                .header("api-key", brevoApiKey)
+                .header("Content-Type", "application/json")
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(String.class)
+                .doOnSuccess(r -> log.info("Email sent successfully to: {}", to))
+                .doOnError(e -> log.error("Email sending failed to: {} — reason: {}", to, e.getMessage()))
+                .block();
     }
 }
