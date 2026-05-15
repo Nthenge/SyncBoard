@@ -5,6 +5,7 @@ import com.eclectics.collaboration.Tool.response.ResponseHandler;
 import com.eclectics.collaboration.Tool.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/user")
+@Slf4j
 public class UserController {
 
     private final UserService userService;
@@ -23,6 +25,7 @@ public class UserController {
     public ResponseEntity<Object> registerUser(
             @RequestBody UserRegistrationRequestDTO requestDTO
     ) throws java.io.IOException {
+        log.info("Register request received → email={}", requestDTO.getEmail());
         UserRegistrationResponseDTO response = userService.createUser(requestDTO, null);
         return ResponseHandler.generateResponse(
                 "Registration successful, open email and confirm your account",

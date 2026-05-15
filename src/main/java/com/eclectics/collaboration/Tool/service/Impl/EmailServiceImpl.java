@@ -11,6 +11,7 @@ import com.eclectics.collaboration.Tool.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -25,6 +26,7 @@ import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
@@ -37,9 +39,24 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendAccountConfirmationEmail(String to, String confirmLink) {
         String subject = "SYNCBOARD ACCOUNT CONFIRMATION";
-        String text = "Hello,\n\nThank you for registering!\n"
-                + "Please confirm your account by clicking the link below:\n"
-                + confirmLink + "\n\nBest regards,\nSYNCBOARD";
+        String text = """
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
+                <h2 style="color: #4F46E5;">Welcome to SYNCBOARD!</h2>
+                <p>Hello,</p>
+                <p>Thank you for registering! Please confirm your account by clicking the button below:</p>
+                <a href="%s"
+                   style="display:inline-block; padding:12px 24px; background-color:#4F46E5;
+                          color:white; text-decoration:none; border-radius:6px; margin: 16px 0;">
+                   Confirm My Account
+                </a>
+                <br/><br/>
+                <img src="https://img.freepik.com/free-vector/team-collaboration-concept_23-2148908789.jpg"
+                     alt="Team Collaboration"
+                     style="width:100%%; max-width:500px; border-radius:8px; margin: 16px 0;" />
+                <br/>
+                <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+            </div>
+            """.formatted(confirmLink);
         sendEmail(to, subject, text);
     }
 
@@ -103,14 +120,17 @@ public class EmailServiceImpl implements EmailService {
 
     private void sendEmail(String to, String subject, String text) {
         try {
+            log.info("Attempting to send email to: {}", to);
             MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message);
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setFrom("syncboardke@gmail.com", "SYNCBOARD KENYA");
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(text);
+            helper.setText(text, true); // true = isHtml
+            log.info("Email sent successfully to: {}", to);
             mailSender.send(message);
         } catch (MessagingException | UnsupportedEncodingException e) {
+            log.error("Email sending failed to: {} — reason: {}", to, e.getMessage(), e);
             throw new RuntimeException("Failed to send email to: " + to, e);
         }
     }
