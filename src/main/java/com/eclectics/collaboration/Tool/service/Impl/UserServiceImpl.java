@@ -45,6 +45,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserRegistrationResponseDTO createUser(UserRegistrationRequestDTO requestDTO, MultipartFile avatarUrl) throws IOException {
 
+        if (userRepository.existsByEmail(requestDTO.getEmail())) {
+            throw new CollaborationExceptions.ResourceAlreadyExistsException(
+                    "An account with email " + requestDTO.getEmail() + " already exists");
+        }
+
         LocalDateTime now = LocalDateTime.now();
         User user = mapper.toEntity(requestDTO);
 

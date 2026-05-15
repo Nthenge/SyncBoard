@@ -61,12 +61,27 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public void sendPasswordResetEmail(String to, String resetLink){
+    public void sendPasswordResetEmail(String to, String resetLink) {
         String subject = "SYNCBOARD RESET PASSWORD";
-        String text = "Hello,\n\nWe received a request to reset your password.\n"
-                + "You can reset your password using the link below:\n"
-                + resetLink + "\n\nIf you didn't request this, please ignore this email.\n"
-                + "Best regards,\nSYNCBOARD";
+        String text = """
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
+                <h2 style="color: #4F46E5;">Password Reset Request</h2>
+                <p>Hello,</p>
+                <p>We received a request to reset your password. Click the button below to proceed:</p>
+                <a href="%s"
+                   style="display:inline-block; padding:12px 24px; background-color:#4F46E5;
+                          color:white; text-decoration:none; border-radius:6px; margin: 16px 0;">
+                   Reset My Password
+                </a>
+                <p style="color: #888; font-size: 13px;">If you didn't request this, you can safely ignore this email. Your password will not be changed.</p>
+                <br/>
+                <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600"
+                     alt="Team Collaboration"
+                     style="width:100%%; max-width:500px; border-radius:8px; margin: 16px 0;" />
+                <br/>
+                <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+            </div>
+            """.formatted(resetLink);
         sendEmail(to, subject, text);
     }
 
@@ -96,27 +111,55 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public void sendInvitationEmail(String to, String token, String workspaceName){
-        String subject = "SYNCHBOARD WORKSPACE INVITE";
-        String text = "Hello,\n\n"
-                + "You've been invited to join the workspace: " + workspaceName + "\n\n"
-                + "Accept:  http://syncboard-frontend-814g.onrender.com/accept-invite?token=" + token + "\n"
-                + "Decline: http://syncboard-frontend-814g.onrender.com/reject-invite?token=" + token + "\n\n"
-                + "This invite expires in 7 days.\n\n"
-                + "Best regards,\nSYNCBOARD";
+    public void sendInvitationEmail(String to, String token, String workspaceName) {
+        String subject = "SYNCBOARD WORKSPACE INVITE";
+        String text = """
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
+                <h2 style="color: #4F46E5;">You're Invited to Join a Workspace!</h2>
+                <p>Hello,</p>
+                <p>You've been invited to join the workspace: <strong>%s</strong></p>
+                <p>Choose your response below:</p>
+                <a href="http://syncboard-frontend-814g.onrender.com/accept-invite?token=%s"
+                   style="display:inline-block; padding:12px 24px; background-color:#4F46E5;
+                          color:white; text-decoration:none; border-radius:6px; margin: 8px 4px;">
+                   Accept Invite
+                </a>
+                <a href="http://syncboard-frontend-814g.onrender.com/reject-invite?token=%s"
+                   style="display:inline-block; padding:12px 24px; background-color:#e53e3e;
+                          color:white; text-decoration:none; border-radius:6px; margin: 8px 4px;">
+                   Decline Invite
+                </a>
+                <p style="color: #888; font-size: 13px;">This invite expires in 7 days.</p>
+                <br/>
+                <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600"
+                     alt="Team Collaboration"
+                     style="width:100%%; max-width:500px; border-radius:8px; margin: 16px 0;" />
+                <br/>
+                <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+            </div>
+            """.formatted(workspaceName, token, token);
         sendEmail(to, subject, text);
     }
 
-        @Override
-        public void sendInviteRejectedEmail(String ownerEmail, String inviteeEmail, String workspaceName){
-            String subject = "SYNCBOARD INVITE DECLINE";
-            String text = "Hello,\n\n"
-                    + inviteeEmail + " has declined your invitation to join the workspace: "
-                    + workspaceName + ".\n\n"
-                    + "You may invite someone else if needed.\n\n"
-                    + "Best regards,\nSYNCBOARD";
-            sendEmail(ownerEmail, subject, text);
-        }
+    @Override
+    public void sendInviteRejectedEmail(String ownerEmail, String inviteeEmail, String workspaceName) {
+        String subject = "SYNCBOARD INVITE DECLINE";
+        String text = """
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
+                <h2 style="color: #4F46E5;">Workspace Invite Declined</h2>
+                <p>Hello,</p>
+                <p><strong>%s</strong> has declined your invitation to join the workspace: <strong>%s</strong>.</p>
+                <p>You may invite someone else if needed.</p>
+                <br/>
+                <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600"
+                     alt="Team Collaboration"
+                     style="width:100%%; max-width:500px; border-radius:8px; margin: 16px 0;" />
+                <br/>
+                <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+            </div>
+            """.formatted(inviteeEmail, workspaceName);
+        sendEmail(ownerEmail, subject, text);
+    }
 
     private void sendEmail(String to, String subject, String text) {
         try {

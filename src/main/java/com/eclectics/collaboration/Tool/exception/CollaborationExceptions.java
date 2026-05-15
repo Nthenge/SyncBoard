@@ -35,4 +35,9 @@ public class CollaborationExceptions extends RuntimeException {
         }
     }
 
+    public static class ResourceAlreadyExistsException extends RuntimeException {
+        public ResourceAlreadyExistsException(String message) {
+            super(message);
+        }
+    }
 }

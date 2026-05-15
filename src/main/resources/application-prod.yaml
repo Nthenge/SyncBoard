@@ -14,7 +14,7 @@ spring:
         format_sql: true
         default_schema: public
   mail:
-    host: smtp.gmail.com
+    host: smtp-relay.brevo.com
     port: 587
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
