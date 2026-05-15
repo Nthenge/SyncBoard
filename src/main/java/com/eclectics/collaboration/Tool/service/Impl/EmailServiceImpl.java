@@ -23,6 +23,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.reactive.function.client.WebClient;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -39,6 +44,12 @@ public class EmailServiceImpl implements EmailService {
 
     @Value("${brevo.api-key}")
     private String brevoApiKey;
+
+    @Value("${brevo.from-email}")
+    private String fromEmaill;
+
+    @Value("${brevo.from-name}")
+    private String fromName;
 
     @Override
     public void sendAccountConfirmationEmail(String to, String confirmLink) {
@@ -165,28 +176,40 @@ public class EmailServiceImpl implements EmailService {
         sendEmail(ownerEmail, subject, text);
     }
 
-    private void sendEmail(String to, String subject, String text) {
+    private void sendEmail(String to, String subject, String htmlContent) {
         log.info("Attempting to send email to: {}", to);
 
-        String body = """
-            {
-                "sender": {"name": "SYNCBOARD KENYA", "email": "syncboardke@gmail.com"},
-                "to": [{"email": "%s"}],
-                "subject": "%s",
-                "htmlContent": "%s"
-            }
-            """.formatted(to, subject, text.replace("\"", "\\\"").replace("\n", "\\n"));
+        Map<String, Object> sender = Map.of(
+                "name", fromName,
+                "email", fromEmaill
+        );
 
-        WebClient client = WebClient.create();
-        client.post()
-                .uri("https://api.brevo.com/v3/smtp/email")
-                .header("api-key", brevoApiKey)
-                .header("Content-Type", "application/json")
-                .bodyValue(body)
-                .retrieve()
-                .bodyToMono(String.class)
-                .doOnSuccess(r -> log.info("Email sent successfully to: {}", to))
-                .doOnError(e -> log.error("Email sending failed to: {} — reason: {}", to, e.getMessage()))
-                .block();
+        Map<String, Object> recipient = Map.of("email", to);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("sender", sender);
+        body.put("to", List.of(recipient));
+        body.put("subject", subject);
+        body.put("htmlContent", htmlContent);
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            String jsonBody = objectMapper.writeValueAsString(body);
+
+            WebClient client = WebClient.create();
+            client.post()
+                    .uri("https://api.brevo.com/v3/smtp/email")
+                    .header("api-key", brevoApiKey)
+                    .header("Content-Type", "application/json")
+                    .bodyValue(jsonBody)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .doOnSuccess(r -> log.info("Email sent successfully to: {}", to))
+                    .doOnError(e -> log.error("Email sending failed to: {} — reason: {}", to, e.getMessage()))
+                    .block();
+        } catch (Exception e) {
+            log.error("Email sending failed to: {} — reason: {}", to, e.getMessage(), e);
+            throw new RuntimeException("Failed to send email to: " + to, e);
+        }
     }
 }
