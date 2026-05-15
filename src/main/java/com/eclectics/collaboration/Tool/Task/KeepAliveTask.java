@@ -9,7 +9,7 @@ import org.springframework.web.client.RestTemplate;
 @EnableScheduling
 public class KeepAliveTask {
 
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = 30000)
     public void pingSelf() {
         String url = " https://syncboard-ptvu.onrender.com/public/health";
         RestTemplate restTemplate = new RestTemplate();
