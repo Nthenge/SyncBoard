@@ -1,16 +1,20 @@
 package com.eclectics.collaboration.Tool.controller;
 
 import com.eclectics.collaboration.Tool.dto.*;
+import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.response.ResponseHandler;
 import com.eclectics.collaboration.Tool.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.net.URI;
 
 @RequiredArgsConstructor
 @RestController
@@ -45,8 +49,22 @@ public class UserController {
     public ResponseEntity<Object> confirmAccount(
             @RequestParam("token") String token
     ) {
-        userService.userConfirmAccount(token);
-        return ResponseHandler.generateResponse("Account confirmed successfully",HttpStatus.CREATED,null,request.getRequestURI());
+        try {
+            userService.userConfirmAccount(token);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setLocation(URI.create("https://syncboard-frontend-814g.onrender.com/login?confirmed=true"));
+            return new ResponseEntity<>(headers, HttpStatus.FOUND);
+        } catch (CollaborationExceptions.ResourceAlreadyExistsException e) {
+            return ResponseHandler.generateResponse(
+                    "Account already confirmed, please login",
+                    HttpStatus.CONFLICT, null, request.getRequestURI()
+            );
+        } catch (Exception e) {
+            return ResponseHandler.generateResponse(
+                    "Account confirmation failed, please try again",
+                    HttpStatus.BAD_REQUEST, null, request.getRequestURI()
+            );
+        }
     }
 
     @PostMapping("/reset-password-request")

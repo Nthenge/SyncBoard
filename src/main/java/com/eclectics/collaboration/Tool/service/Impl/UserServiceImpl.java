@@ -148,6 +148,10 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
 
+        if (user.isEnabled()) {
+            throw new CollaborationExceptions.ResourceAlreadyExistsException("Account already confirmed, please login");
+        }
+
         user.setEnabled(true);
         userRepository.save(user);
     }
