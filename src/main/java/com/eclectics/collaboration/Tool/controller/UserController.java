@@ -51,9 +51,10 @@ public class UserController {
     ) {
         try {
             userService.userConfirmAccount(token);
-            HttpHeaders headers = new HttpHeaders();
-            headers.setLocation(URI.create("https://syncboard-frontend-814g.onrender.com/login?confirmed=true"));
-            return new ResponseEntity<>(headers, HttpStatus.FOUND);
+            return ResponseHandler.generateResponse(
+                    "Account confirmed successfully, please login",
+                    HttpStatus.OK, null, request.getRequestURI()
+            );
         } catch (CollaborationExceptions.ResourceAlreadyExistsException e) {
             return ResponseHandler.generateResponse(
                     "Account already confirmed, please login",
