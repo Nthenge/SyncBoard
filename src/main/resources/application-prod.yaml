@@ -13,6 +13,7 @@ spring:
       hibernate:
         format_sql: true
         default_schema: public
+        ddl-auto: validate
   mail:
     host: smtp-relay.brevo.com
     port: 587

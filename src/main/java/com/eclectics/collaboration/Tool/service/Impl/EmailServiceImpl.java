@@ -2,12 +2,14 @@ package com.eclectics.collaboration.Tool.service.Impl;
 
 import com.eclectics.collaboration.Tool.dto.InviteRequestDTO;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
+import com.eclectics.collaboration.Tool.model.ConfigKey;
 import com.eclectics.collaboration.Tool.model.Invitation;
 import com.eclectics.collaboration.Tool.model.User;
 import com.eclectics.collaboration.Tool.model.WorkSpace;
 import com.eclectics.collaboration.Tool.repository.InvitationRepository;
 import com.eclectics.collaboration.Tool.repository.WorkSpaceReposiroty;
 import com.eclectics.collaboration.Tool.service.EmailService;
+import com.eclectics.collaboration.Tool.service.SystemConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +34,7 @@ public class EmailServiceImpl implements EmailService {
     private final JavaMailSender mailSender;
     private final WorkSpaceReposiroty workspaceRepository;
     private final InvitationRepository invitationRepository;
+    private final SystemConfigService systemConfigService;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
@@ -172,7 +175,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendNewSupportNotification(String submitterName, String submitterEmail, String issueName, String message) {
-        String adminEmail = "nthengesj@gmail.com";
+        String adminEmail = systemConfigService.getValueByKey(ConfigKey.SUPPORT_EMAIL);
         String subject = "SYNCBOARD — New Support Request Received";
         String text = """
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">

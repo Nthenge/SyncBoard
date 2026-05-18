@@ -12,6 +12,9 @@ spring:
     url: jdbc:postgresql://${DB_HOST:localhost}:5432/collaborationTool
     username: postgres
     password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
 
 server:
   port: 8082
