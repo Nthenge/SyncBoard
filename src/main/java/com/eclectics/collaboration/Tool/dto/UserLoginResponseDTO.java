@@ -4,16 +4,18 @@ public class UserLoginResponseDTO {
     private Long id;
     private String email;
     private String token;
+    private String refreshToken;
     private String firstName;
 
     public UserLoginResponseDTO() {
     }
 
-    public UserLoginResponseDTO(Long id, String email, String token, String firstName) {
+    public UserLoginResponseDTO(Long id, String email, String token, String firstName, String refreshToken) {
         this.id = id;
         this.email = email;
         this.token = token;
         this.firstName = firstName;
+        this.refreshToken = refreshToken;
     }
 
     public Long getId() {
@@ -46,5 +48,13 @@ public class UserLoginResponseDTO {
 
     public void setFirstName(String firstName) {
         this.firstName = firstName;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 }

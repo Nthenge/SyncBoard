@@ -3,9 +3,11 @@ package com.eclectics.collaboration.Tool.service.Impl;
 import com.eclectics.collaboration.Tool.dto.*;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.mapper.UserMapper;
+import com.eclectics.collaboration.Tool.model.RefreshToken;
 import com.eclectics.collaboration.Tool.model.User;
 import com.eclectics.collaboration.Tool.repository.UserRespository;
 import com.eclectics.collaboration.Tool.security.JwtUtil;
+import com.eclectics.collaboration.Tool.service.RefreshTokenService;
 import com.eclectics.collaboration.Tool.service.UserService;
 import com.eclectics.collaboration.Tool.service.EmailService;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,7 @@ public class UserServiceImpl implements UserService {
     private final EmailService emailService;
     private final OSSService ossService;
     private final StringRedisTemplate redisTemplate;
+    private RefreshTokenService refreshTokenService;
 
     private String getFileExtension(String filename) {
         if (filename != null && filename.lastIndexOf(".") != -1) {
@@ -94,8 +97,9 @@ public class UserServiceImpl implements UserService {
         }
 
         String token = jwtUtil.generateToken(user.getEmail());
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getEmail());
 
-        return new UserLoginResponseDTO(user.getId(), user.getEmail(), token, user.getFirstName());
+        return new UserLoginResponseDTO(user.getId(), user.getEmail(), token, refreshToken.getToken(), user.getFirstName());
     }
 
     @Override
@@ -176,6 +180,20 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public TokenRefreshResponseDTO refreshToken(String requestToken) {
+
+        RefreshToken refreshToken = refreshTokenService.findByToken(requestToken)
+                .orElseThrow(() -> new CollaborationExceptions.UnauthorizedException("Refresh token not found. Please log in again."));
+
+        refreshTokenService.verifyExpiration(refreshToken); // throws if expired
+
+        String email = refreshToken.getUser().getEmail();
+        String newAccessToken = jwtUtil.generateToken(email);
+
+        return new TokenRefreshResponseDTO(newAccessToken, requestToken);
+    }
+
+    @Override
     public void logOutUser(String tokenHeader) {
         if (tokenHeader != null && tokenHeader.startsWith("Bearer ")) {
             String jwt = tokenHeader.substring(7);
@@ -183,7 +201,6 @@ public class UserServiceImpl implements UserService {
             try {
                 String tokenId = jwtUtil.extractId(jwt);
                 Date expiration = jwtUtil.extractExpiration(jwt);
-
                 long ttl = expiration.getTime() - System.currentTimeMillis();
 
                 if (ttl > 0) {
@@ -192,10 +209,14 @@ public class UserServiceImpl implements UserService {
                             "true",
                             Duration.ofMillis(ttl)
                     );
-                    System.out.println("Token blacklisted in Redis. ID: " + tokenId);
                 }
+
+                // Also revoke the refresh token
+                String email = jwtUtil.extractEmail(jwt);
+                refreshTokenService.deleteByUser(email); // new
+
             } catch (Exception e) {
-                System.err.println("Could not blacklist token: " + e.getMessage());
+                log.error("Could not blacklist token: {}", e.getMessage());
             }
         }
 
