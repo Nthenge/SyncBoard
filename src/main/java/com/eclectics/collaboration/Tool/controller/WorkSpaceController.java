@@ -12,6 +12,7 @@ import com.eclectics.collaboration.Tool.service.EmailService;
 import com.eclectics.collaboration.Tool.service.InvitationService;
 import com.eclectics.collaboration.Tool.service.WorkSpaceService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,7 +28,6 @@ import java.util.List;
 @RequestMapping("/workspace")
 public class WorkSpaceController {
 
-    @Autowired
     private final WorkSpaceService workSpaceService;
     private final EmailService emailService;
     private final InvitationService invitationService;
@@ -36,118 +36,64 @@ public class WorkSpaceController {
     @PostMapping("/create")
     public ResponseEntity<Object> createWorkSpace(
             @RequestBody WorkSpaceRequestDTO requestDTO,
-            @AuthenticationPrincipal CustomUserDetails userDetails){
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
-        WorkSpace response = workSpaceService.createWorkspace(user,requestDTO);
-        return ResponseHandler.generateResponse("Work space Created", HttpStatus.CREATED,response, request.getRequestURI());
+        WorkSpaceResponseDTO response = workSpaceService.createWorkspace(user, requestDTO);  // now uses DTO
+        return ResponseHandler.generateResponse("Workspace created", HttpStatus.CREATED, response, request.getRequestURI());
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> deleteWorkSpace(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        User user = userDetails.getUser();
-
-        workSpaceService.deleteWorkspace(id, user);
-
+        workSpaceService.deleteWorkspace(id, userDetails.getUser());
         return ResponseHandler.generateResponse("Workspace deleted successfully", HttpStatus.OK, null, request.getRequestURI());
     }
 
     @PostMapping("/invite")
     public ResponseEntity<Object> inviteWorkmates(
-            @RequestBody InviteRequestDTO inviteRequest,
+            @RequestBody @Valid InviteRequestDTO inviteRequest,       // @Valid was missing
             @AuthenticationPrincipal CustomUserDetails userDetails) throws AccessDeniedException {
-
-        User owner = userDetails.getUser();
-
-        emailService.inviteUsers(owner, inviteRequest);
-
+        emailService.inviteUsers(userDetails.getUser(), inviteRequest);
         String message = "Invitations sent successfully to: " + String.join(", ", inviteRequest.getEmails());
-
-        return ResponseHandler.generateResponse(
-                message,
-                HttpStatus.OK,
-                null,
-                request.getRequestURI()
-        );
+        return ResponseHandler.generateResponse(message, HttpStatus.OK, null, request.getRequestURI());
     }
 
     @PostMapping("/accept-invite")
     public ResponseEntity<Object> acceptInvite(
             @RequestParam String token,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        User invitee = userDetails.getUser();
-
-        invitationService.acceptInvite(token, invitee);
-
-        return ResponseHandler.generateResponse(
-                "Successfully joined the workspace",
-                HttpStatus.ACCEPTED,
-                null,
-                request.getRequestURI()
-        );
+        invitationService.acceptInvite(token, userDetails.getUser());
+        return ResponseHandler.generateResponse("Successfully joined the workspace", HttpStatus.OK, null, request.getRequestURI());
     }
 
-    // POST /reject-invite?token=xxx
     @PostMapping("/reject-invite")
     public ResponseEntity<Object> rejectInvite(
             @RequestParam String token,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        User invitee = userDetails.getUser();
-
-        invitationService.rejectInvite(token, invitee);
-
-        return ResponseHandler.generateResponse(
-                "Invitation declined successfully",
-                HttpStatus.OK,
-                null,
-                request.getRequestURI()
-        );
+        invitationService.rejectInvite(token, userDetails.getUser());
+        return ResponseHandler.generateResponse("Invitation declined successfully", HttpStatus.OK, null, request.getRequestURI());
     }
 
     @GetMapping("/my-workspaces")
     public ResponseEntity<Object> getMyWorkspaces() {
-        List<WorkSpaceResponseDTO> workspaces = workSpaceService.myWorkspaces();
-        return ResponseHandler.generateResponse("Work spaces for logged in user", HttpStatus.OK,workspaces,request.getRequestURI());
+        return ResponseHandler.generateResponse("Workspaces for logged in user", HttpStatus.OK,
+                workSpaceService.myWorkspaces(), request.getRequestURI());
     }
 
-    // DELETE /invitations/{invitationId}
     @DeleteMapping("/invitations/{invitationId}")
     public ResponseEntity<Object> deleteInvitation(
             @PathVariable Long invitationId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        User requester = userDetails.getUser();
-
-        invitationService.deleteInvitation(invitationId, requester);
-
-        return ResponseHandler.generateResponse(
-                "Invitation deleted successfully",
-                HttpStatus.OK,
-                null,
-                request.getRequestURI()
-        );
+        invitationService.deleteInvitation(invitationId, userDetails.getUser());
+        return ResponseHandler.generateResponse("Invitation deleted successfully", HttpStatus.OK, null, request.getRequestURI());
     }
 
-    // GET /workspaces/{workspaceId}/invitations
-    @GetMapping("/workspaces/{workspaceId}/invitations")
+    @GetMapping("/{workspaceId}/invitations")           // fixed — was /workspaces/{id} inside a /workspace mapping, making the full path /workspace/workspaces/{id}
     public ResponseEntity<Object> getWorkspaceInvitations(
             @PathVariable Long workspaceId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        User requester = userDetails.getUser();
-
-        List<InvitationResponseDTO> invitations =
-                invitationService.getWorkspaceInvitations(workspaceId, requester);
-
-        return ResponseHandler.generateResponse(
-                "Workspace invitations fetched successfully",
-                HttpStatus.OK,
-                invitations,
-                request.getRequestURI()
-        );
+        List<InvitationResponseDTO> invitations = invitationService.getWorkspaceInvitations(workspaceId, userDetails.getUser());
+        return ResponseHandler.generateResponse("Workspace invitations fetched", HttpStatus.OK, invitations, request.getRequestURI());
     }
-
 }

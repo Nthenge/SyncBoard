@@ -10,6 +10,7 @@ import com.eclectics.collaboration.Tool.repository.UserRespository;
 import com.eclectics.collaboration.Tool.repository.WorkSpaceReposiroty;
 import com.eclectics.collaboration.Tool.service.WorkSpaceService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class WorkSpaceServiceImpl implements WorkSpaceService {
@@ -28,9 +30,11 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
     private final UserRespository userRespository;
 
     @Override
-    public WorkSpace createWorkspace(User user, WorkSpaceRequestDTO request) {
+    public WorkSpaceResponseDTO createWorkspace(User user, WorkSpaceRequestDTO request) {
         WorkSpace ws = workSpaceMapper.toEntity(request, user);
-        return workSpaceReposiroty.save(ws);
+        WorkSpace saved = workSpaceReposiroty.save(ws);
+        log.info("Workspace created id={} by user={}", saved.getId(), user.getEmail());
+        return workSpaceMapper.toDto(saved);
     }
 
     @Override

@@ -23,13 +23,22 @@ public class WorkSpace {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String workSpaceName;
+
+    @Column(length = 500)
     private String workSpaceDescription;
+
     private String workSpaceCreatedBy;
+
+    @Column(nullable = false, updatable = false)
     private LocalDateTime workSpaceCreatedAt;
 
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;                  // was missing entirely
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnore
     private User workSpaceOwnerId;
 
@@ -39,5 +48,18 @@ public class WorkSpace {
             joinColumns = @JoinColumn(name = "workspace_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
+    @JsonIgnore                                       // was missing — causes infinite recursion
     private Set<User> members = new HashSet<>();
+
+    @PrePersist
+    protected void onCreate() {
+        workSpaceCreatedAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
 }

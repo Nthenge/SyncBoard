@@ -1,20 +1,27 @@
 spring:
   mail:
-    host: sandbox.smtp.mailtrap.io
+    host: smtp-relay.brevo.com
     port: 2525
-    username: ${MAILTRAP_USERNAME}
-    password: ${MAILTRAP_PASSWORD}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      url: ${REDIS_URL}
+      lettuce:
+        pool:
+          enabled: false
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:5432/collaborationTool
     username: postgres
     password: ${DB_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
+
+brevo:
+  api-key: ${BREVO_API_KEY}
+  from-email: ${BREVO_FROM_EMAIL}
+  from-name: ${BREVO_FROM_NAME}
 
 server:
   port: 8082

@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 public interface WorkSpaceService {
-    WorkSpace createWorkspace(User user, WorkSpaceRequestDTO request);
+    WorkSpaceResponseDTO createWorkspace(User user, WorkSpaceRequestDTO request);
 
     List<WorkSpaceResponseDTO> myWorkspaces();
 

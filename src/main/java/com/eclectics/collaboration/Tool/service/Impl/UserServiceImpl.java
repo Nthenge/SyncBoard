@@ -36,7 +36,7 @@ public class UserServiceImpl implements UserService {
     private final EmailService emailService;
     private final OSSService ossService;
     private final StringRedisTemplate redisTemplate;
-    private RefreshTokenService refreshTokenService;
+    private final RefreshTokenService refreshTokenService;
 
     private String getFileExtension(String filename) {
         if (filename != null && filename.lastIndexOf(".") != -1) {
@@ -99,7 +99,7 @@ public class UserServiceImpl implements UserService {
         String token = jwtUtil.generateToken(user.getEmail());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getEmail());
 
-        return new UserLoginResponseDTO(user.getId(), user.getEmail(), token, refreshToken.getToken(), user.getFirstName());
+        return new UserLoginResponseDTO(user.getId(), user.getEmail(), token, user.getFirstName(), refreshToken.getToken());
     }
 
     @Override
