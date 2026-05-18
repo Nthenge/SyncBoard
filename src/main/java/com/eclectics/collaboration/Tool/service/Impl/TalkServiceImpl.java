@@ -10,6 +10,7 @@ import com.eclectics.collaboration.Tool.model.Talk;
 import com.eclectics.collaboration.Tool.model.TalkStatus;
 import com.eclectics.collaboration.Tool.repository.IssueRepository;
 import com.eclectics.collaboration.Tool.repository.TalkRepository;
+import com.eclectics.collaboration.Tool.service.EmailService;
 import com.eclectics.collaboration.Tool.service.TalkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ public class TalkServiceImpl implements TalkService {
     private final TalkRepository talkRepository;
     private final IssueRepository issueRepository;
     private final TalkMapper talkMapper;
+    private final EmailService emailService;
 
     @Override
     public TalkResponseDTO submitTalk(TalkRequestDTO requestDTO) {
@@ -39,6 +41,18 @@ public class TalkServiceImpl implements TalkService {
 
         Talk saved = talkRepository.save(talkMapper.toEntity(requestDTO, issue));
         log.info("Talk submitted id={} for issue={}", saved.getId(), issue.getName());
+
+        try {
+            emailService.sendNewSupportNotification(
+                    saved.getFullName(),
+                    saved.getEmail(),
+                    issue.getName(),
+                    saved.getMessage()
+            );
+        } catch (Exception e) {
+            log.error("Failed to send admin support notification for talk id={} — reason: {}", saved.getId(), e.getMessage());
+        }
+
         return talkMapper.toResponse(saved);
     }
 

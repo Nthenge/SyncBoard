@@ -8,23 +8,17 @@ import com.eclectics.collaboration.Tool.model.WorkSpace;
 import com.eclectics.collaboration.Tool.repository.InvitationRepository;
 import com.eclectics.collaboration.Tool.repository.WorkSpaceReposiroty;
 import com.eclectics.collaboration.Tool.service.EmailService;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.web.reactive.function.client.WebClient;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -174,6 +168,48 @@ public class EmailServiceImpl implements EmailService {
             </div>
             """.formatted(inviteeEmail, workspaceName);
         sendEmail(ownerEmail, subject, text);
+    }
+
+    @Override
+    public void sendNewSupportNotification(String submitterName, String submitterEmail, String issueName, String message) {
+        String adminEmail = "nthengesj@gmail.com";
+        String subject = "SYNCBOARD — New Support Request Received";
+        String text = """
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
+            <h2 style="color: #4F46E5;">New Support Request</h2>
+            <p>Hello Admin,</p>
+            <p>A new support message has been submitted. Here are the details:</p>
+
+            <table style="width: 100%%; border-collapse: collapse; margin: 16px 0;">
+                <tr style="background-color: #f3f4f6;">
+                    <td style="padding: 10px 14px; font-weight: bold; width: 140px;">Full Name</td>
+                    <td style="padding: 10px 14px;">%s</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 14px; font-weight: bold;">Email</td>
+                    <td style="padding: 10px 14px;">
+                        <a href="mailto:%s" style="color: #4F46E5;">%s</a>
+                    </td>
+                </tr>
+                <tr style="background-color: #f3f4f6;">
+                    <td style="padding: 10px 14px; font-weight: bold;">Issue Category</td>
+                    <td style="padding: 10px 14px;">%s</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 14px; font-weight: bold; vertical-align: top;">Message</td>
+                    <td style="padding: 10px 14px;">%s</td>
+                </tr>
+            </table>
+
+            <p style="color: #888; font-size: 13px;">
+                Log in to the admin dashboard to review and update the status of this request.
+            </p>
+            <br/>
+            <p>Best regards,<br/><strong>SYNCBOARD SYSTEM</strong></p>
+        </div>
+        """.formatted(submitterName, submitterEmail, submitterEmail, issueName, message);
+
+        sendEmail(adminEmail, subject, text);
     }
 
     private void sendEmail(String to, String subject, String htmlContent) {
