@@ -9,25 +9,33 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "issues")
+@Table(name = "talks")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Issue {
+public class Talk {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
-    private String name;
+    @Column(nullable = false, length = 100)
+    private String fullName;
 
-    @Column(length = 300)
-    private String description;
+    @Column(nullable = false, length = 150)
+    private String email;
 
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String message;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "issue_id", nullable = false)
+    private Issue issue;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private boolean active = true;
+    private TalkStatus status = TalkStatus.PENDING;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
