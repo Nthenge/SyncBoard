@@ -38,6 +38,7 @@ public class SecurityConfig {
         configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(List.of("Authorization", "Location")); // add this
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -68,6 +69,9 @@ public class SecurityConfig {
                                 "/user/register",
                                 "/user/reset-password",
                                 "/user/confirm",
+                                "/faqs/active",
+                                "/issues/active",
+                                "/talks",
                                 "/user/verify-reset-token",
                                 "/service/**",
                                 "/v3/api-docs/**",
