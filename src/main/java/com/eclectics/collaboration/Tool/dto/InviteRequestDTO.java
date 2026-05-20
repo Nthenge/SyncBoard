@@ -17,6 +17,6 @@ import java.util.List;
 public class InviteRequestDTO {
 
     @NotEmpty(message = "Email list cannot be empty")
-    private List<String> emails;
+    private List<String> email;
 
 }

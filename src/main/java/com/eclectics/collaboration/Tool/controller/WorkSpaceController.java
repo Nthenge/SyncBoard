@@ -59,7 +59,7 @@ public class WorkSpaceController {
 
         emailService.inviteUsers(userDetails.getUser(), inviteRequest, workspaceId);
 
-        String message = "Invitations sent successfully to: " + String.join(", ", inviteRequest.getEmails());
+        String message = "Invitations sent successfully to: " + String.join(", ", inviteRequest.getEmail());
         return ResponseHandler.generateResponse(message, HttpStatus.OK, null, request.getRequestURI());
     }
 
