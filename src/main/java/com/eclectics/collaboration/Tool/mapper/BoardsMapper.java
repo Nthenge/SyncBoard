@@ -12,7 +12,7 @@ import org.mapstruct.Mapping;
 public interface BoardsMapper {
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "workSpace", source = "workSpace")
+    // Map the ID field inside the WorkSpace object directly to the Long field in Boards
     @Mapping(target = "workSpaceId", source = "workSpace.id")
     @Mapping(target = "boardCreatedBy", source = "user.fullName")
     @Mapping(target = "boardCreatedAt", expression = "java(java.time.LocalDateTime.now())")
