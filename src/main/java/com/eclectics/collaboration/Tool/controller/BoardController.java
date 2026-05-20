@@ -7,6 +7,7 @@ import com.eclectics.collaboration.Tool.response.ResponseHandler;
 import com.eclectics.collaboration.Tool.security.CustomUserDetails;
 import com.eclectics.collaboration.Tool.service.BoardsService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,11 +55,13 @@ public class BoardController {
     }
 
     // POST /boards  (workspaceId comes from request body)
-    @PostMapping()
+    @PostMapping("/{workspaceId}") // Clear, RESTful URL hierarchy
     public ResponseEntity<Object> createBoard(
-            @RequestBody BoardsRequestDTO dto) {
+            @PathVariable Long workspaceId, // Captures ID from the URL path
+            @RequestBody @Valid BoardsRequestDTO dto, // Request body handles board details
+            HttpServletRequest request) {
 
-        BoardsResponseDTO response = boardService.createBoard(dto.getWorkspaceId(), dto);
+        BoardsResponseDTO response = boardService.createBoard(workspaceId, dto);
 
         return ResponseHandler.generateResponse(
                 "Board created successfully",

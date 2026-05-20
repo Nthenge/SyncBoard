@@ -50,7 +50,7 @@ public class WorkSpaceController {
         return ResponseHandler.generateResponse("Workspace deleted successfully", HttpStatus.OK, null, request.getRequestURI());
     }
 
-    @PostMapping("/workspace/{workspaceId}/invite")
+    @PostMapping("/{workspaceId}/invite")
     public ResponseEntity<Object> inviteWorkmates(
             @PathVariable Long workspaceId,
             @RequestBody @Valid InviteRequestDTO inviteRequest,

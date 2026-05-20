@@ -12,8 +12,9 @@ import org.mapstruct.Mapping;
 public interface BoardsMapper {
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "workSpaceId", source = "workSpace")
-    @Mapping(target = "boardCreatedBy", expression = "java(user.getFullName())")
+    @Mapping(target = "workSpace", source = "workSpace")
+    @Mapping(target = "workSpaceId", source = "workSpace.id")
+    @Mapping(target = "boardCreatedBy", source = "user.fullName")
     @Mapping(target = "boardCreatedAt", expression = "java(java.time.LocalDateTime.now())")
     Boards toEntity(BoardsRequestDTO dto, WorkSpace workSpace, User user);
 
