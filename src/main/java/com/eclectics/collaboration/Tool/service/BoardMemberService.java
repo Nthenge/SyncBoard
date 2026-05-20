@@ -1,7 +1,7 @@
 package com.eclectics.collaboration.Tool.service;
 
 import com.eclectics.collaboration.Tool.dto.BoardMemberResponseDTO;
-import com.eclectics.collaboration.Tool.model.BoardRole;
+import com.eclectics.collaboration.Tool.enums.BoardRole;
 
 import java.util.List;
 

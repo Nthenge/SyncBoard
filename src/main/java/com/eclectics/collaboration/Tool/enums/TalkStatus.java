@@ -1,4 +1,4 @@
-package com.eclectics.collaboration.Tool.model;
+package com.eclectics.collaboration.Tool.enums;
 
 public enum TalkStatus {
     PENDING,

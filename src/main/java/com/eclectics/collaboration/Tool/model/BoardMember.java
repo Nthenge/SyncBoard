@@ -1,5 +1,6 @@
 package com.eclectics.collaboration.Tool.model;
 
+import com.eclectics.collaboration.Tool.enums.BoardRole;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

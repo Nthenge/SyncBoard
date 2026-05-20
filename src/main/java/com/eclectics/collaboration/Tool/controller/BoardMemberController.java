@@ -1,10 +1,9 @@
 package com.eclectics.collaboration.Tool.controller;
 
 import com.eclectics.collaboration.Tool.dto.AddBoardMemberRequestDTO;
-import com.eclectics.collaboration.Tool.model.BoardRole;
+import com.eclectics.collaboration.Tool.enums.BoardRole;
 import com.eclectics.collaboration.Tool.security.CustomUserDetails;
 import com.eclectics.collaboration.Tool.service.BoardMemberService;
-import com.sun.security.auth.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

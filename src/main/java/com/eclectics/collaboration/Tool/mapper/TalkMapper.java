@@ -4,7 +4,7 @@ import com.eclectics.collaboration.Tool.dto.TalkRequestDTO;
 import com.eclectics.collaboration.Tool.dto.TalkResponseDTO;
 import com.eclectics.collaboration.Tool.model.Issue;
 import com.eclectics.collaboration.Tool.model.Talk;
-import com.eclectics.collaboration.Tool.model.TalkStatus;
+import com.eclectics.collaboration.Tool.enums.TalkStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

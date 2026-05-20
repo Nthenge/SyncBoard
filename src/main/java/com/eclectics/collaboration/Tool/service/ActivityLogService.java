@@ -1,6 +1,6 @@
 package com.eclectics.collaboration.Tool.service;
 
-import com.eclectics.collaboration.Tool.model.ActionType;
+import com.eclectics.collaboration.Tool.enums.ActionType;
 import com.eclectics.collaboration.Tool.model.Boards;
 import com.eclectics.collaboration.Tool.model.User;
 

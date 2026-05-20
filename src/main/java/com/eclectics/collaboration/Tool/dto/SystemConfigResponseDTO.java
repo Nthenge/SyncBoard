@@ -1,6 +1,6 @@
 package com.eclectics.collaboration.Tool.dto;
 
-import com.eclectics.collaboration.Tool.model.ConfigKey;
+import com.eclectics.collaboration.Tool.enums.ConfigKey;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

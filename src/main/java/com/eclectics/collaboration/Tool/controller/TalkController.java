@@ -2,7 +2,7 @@ package com.eclectics.collaboration.Tool.controller;
 
 import com.eclectics.collaboration.Tool.dto.TalkRequestDTO;
 import com.eclectics.collaboration.Tool.dto.TalkStatusUpdateDTO;
-import com.eclectics.collaboration.Tool.model.TalkStatus;
+import com.eclectics.collaboration.Tool.enums.TalkStatus;
 import com.eclectics.collaboration.Tool.response.ResponseHandler;
 import com.eclectics.collaboration.Tool.service.TalkService;
 import jakarta.servlet.http.HttpServletRequest;

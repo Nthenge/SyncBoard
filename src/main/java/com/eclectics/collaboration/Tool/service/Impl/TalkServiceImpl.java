@@ -7,7 +7,7 @@ import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.mapper.TalkMapper;
 import com.eclectics.collaboration.Tool.model.Issue;
 import com.eclectics.collaboration.Tool.model.Talk;
-import com.eclectics.collaboration.Tool.model.TalkStatus;
+import com.eclectics.collaboration.Tool.enums.TalkStatus;
 import com.eclectics.collaboration.Tool.repository.IssueRepository;
 import com.eclectics.collaboration.Tool.repository.TalkRepository;
 import com.eclectics.collaboration.Tool.service.EmailService;

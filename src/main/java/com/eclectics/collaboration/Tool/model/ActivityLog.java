@@ -1,5 +1,6 @@
 package com.eclectics.collaboration.Tool.model;
 
+import com.eclectics.collaboration.Tool.enums.ActionType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

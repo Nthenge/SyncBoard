@@ -3,7 +3,7 @@ package com.eclectics.collaboration.Tool.service;
 import com.eclectics.collaboration.Tool.dto.TalkRequestDTO;
 import com.eclectics.collaboration.Tool.dto.TalkResponseDTO;
 import com.eclectics.collaboration.Tool.dto.TalkStatusUpdateDTO;
-import com.eclectics.collaboration.Tool.model.TalkStatus;
+import com.eclectics.collaboration.Tool.enums.TalkStatus;
 
 import java.util.List;
 

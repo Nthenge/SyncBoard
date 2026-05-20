@@ -1,7 +1,7 @@
 package com.eclectics.collaboration.Tool.service.Impl;
 
 import com.eclectics.collaboration.Tool.model.Notification;
-import com.eclectics.collaboration.Tool.model.NotificationType;
+import com.eclectics.collaboration.Tool.enums.NotificationType;
 import com.eclectics.collaboration.Tool.model.User;
 import com.eclectics.collaboration.Tool.repository.NotificationRepository;
 import com.eclectics.collaboration.Tool.service.NotificationService;

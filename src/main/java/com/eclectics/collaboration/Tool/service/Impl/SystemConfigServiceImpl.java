@@ -4,7 +4,7 @@ import com.eclectics.collaboration.Tool.dto.SystemConfigRequestDTO;
 import com.eclectics.collaboration.Tool.dto.SystemConfigResponseDTO;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.mapper.SystemConfigMapper;
-import com.eclectics.collaboration.Tool.model.ConfigKey;
+import com.eclectics.collaboration.Tool.enums.ConfigKey;
 import com.eclectics.collaboration.Tool.model.SystemConfig;
 import com.eclectics.collaboration.Tool.repository.SystemConfigRepository;
 import com.eclectics.collaboration.Tool.service.SystemConfigService;

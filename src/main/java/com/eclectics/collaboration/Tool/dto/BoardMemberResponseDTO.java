@@ -1,6 +1,6 @@
 package com.eclectics.collaboration.Tool.dto;
 
-import com.eclectics.collaboration.Tool.model.BoardRole;
+import com.eclectics.collaboration.Tool.enums.BoardRole;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

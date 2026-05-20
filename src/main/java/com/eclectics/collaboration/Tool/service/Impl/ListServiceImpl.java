@@ -2,6 +2,7 @@ package com.eclectics.collaboration.Tool.service.Impl;
 
 import com.eclectics.collaboration.Tool.dto.ListRequestDTO;
 import com.eclectics.collaboration.Tool.dto.ListResponseDTO;
+import com.eclectics.collaboration.Tool.enums.BoardRole;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.mapper.ListMapper;
 import com.eclectics.collaboration.Tool.model.*;

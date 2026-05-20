@@ -1,5 +1,6 @@
 package com.eclectics.collaboration.Tool.model;
 
+import com.eclectics.collaboration.Tool.enums.Priority;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

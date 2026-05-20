@@ -1,11 +1,10 @@
 package com.eclectics.collaboration.Tool.repository;
 
 import com.eclectics.collaboration.Tool.model.BoardMember;
-import com.eclectics.collaboration.Tool.model.BoardRole;
+import com.eclectics.collaboration.Tool.enums.BoardRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 

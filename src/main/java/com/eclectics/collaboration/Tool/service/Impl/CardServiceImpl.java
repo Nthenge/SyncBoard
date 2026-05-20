@@ -3,6 +3,7 @@ package com.eclectics.collaboration.Tool.service.Impl;
 import com.eclectics.collaboration.Tool.dto.CardMoveRequestDTO;
 import com.eclectics.collaboration.Tool.dto.CardRequestDTO;
 import com.eclectics.collaboration.Tool.dto.CardResponseDTO;
+import com.eclectics.collaboration.Tool.enums.BoardRole;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.mapper.CardMapper;
 import com.eclectics.collaboration.Tool.model.*;

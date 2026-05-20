@@ -1,7 +1,7 @@
 package com.eclectics.collaboration.Tool.controller;
 
 import com.eclectics.collaboration.Tool.dto.SystemConfigRequestDTO;
-import com.eclectics.collaboration.Tool.model.ConfigKey;
+import com.eclectics.collaboration.Tool.enums.ConfigKey;
 import com.eclectics.collaboration.Tool.response.ResponseHandler;
 import com.eclectics.collaboration.Tool.service.SystemConfigService;
 import jakarta.servlet.http.HttpServletRequest;

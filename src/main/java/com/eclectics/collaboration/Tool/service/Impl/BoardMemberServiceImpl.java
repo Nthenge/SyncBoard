@@ -4,7 +4,7 @@ import com.eclectics.collaboration.Tool.dto.BoardMemberResponseDTO;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.mapper.BoardMemberMapper;
 import com.eclectics.collaboration.Tool.model.BoardMember;
-import com.eclectics.collaboration.Tool.model.BoardRole;
+import com.eclectics.collaboration.Tool.enums.BoardRole;
 import com.eclectics.collaboration.Tool.model.Boards;
 import com.eclectics.collaboration.Tool.model.User;
 import com.eclectics.collaboration.Tool.repository.BoardMemberRepository;

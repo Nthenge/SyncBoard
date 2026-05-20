@@ -1,6 +1,6 @@
 package com.eclectics.collaboration.Tool.repository;
 
-import com.eclectics.collaboration.Tool.model.ConfigKey;
+import com.eclectics.collaboration.Tool.enums.ConfigKey;
 import com.eclectics.collaboration.Tool.model.SystemConfig;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

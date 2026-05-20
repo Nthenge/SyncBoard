@@ -1,6 +1,6 @@
 package com.eclectics.collaboration.Tool.dto;
 
-import com.eclectics.collaboration.Tool.model.ConfigKey;
+import com.eclectics.collaboration.Tool.enums.ConfigKey;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

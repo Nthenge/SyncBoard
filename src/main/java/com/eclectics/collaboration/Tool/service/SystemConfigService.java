@@ -2,7 +2,7 @@ package com.eclectics.collaboration.Tool.service;
 
 import com.eclectics.collaboration.Tool.dto.SystemConfigRequestDTO;
 import com.eclectics.collaboration.Tool.dto.SystemConfigResponseDTO;
-import com.eclectics.collaboration.Tool.model.ConfigKey;
+import com.eclectics.collaboration.Tool.enums.ConfigKey;
 
 import java.util.List;
 
