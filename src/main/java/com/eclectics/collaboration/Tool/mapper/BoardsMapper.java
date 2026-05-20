@@ -12,8 +12,8 @@ import org.mapstruct.Mapping;
 public interface BoardsMapper {
 
     @Mapping(target = "id", ignore = true)
-    // Map the ID field inside the WorkSpace object directly to the Long field in Boards
-    @Mapping(target = "workSpaceId", source = "workSpace.id")
+    // Map the incoming 'workSpace' object argument directly to the 'workSpaceId' field in your entity
+    @Mapping(target = "workSpaceId", source = "workSpace")
     @Mapping(target = "boardCreatedBy", source = "user.fullName")
     @Mapping(target = "boardCreatedAt", expression = "java(java.time.LocalDateTime.now())")
     Boards toEntity(BoardsRequestDTO dto, WorkSpace workSpace, User user);
