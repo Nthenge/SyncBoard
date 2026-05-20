@@ -50,11 +50,15 @@ public class WorkSpaceController {
         return ResponseHandler.generateResponse("Workspace deleted successfully", HttpStatus.OK, null, request.getRequestURI());
     }
 
-    @PostMapping("/invite")
+    @PostMapping("/workspace/{workspaceId}/invite")
     public ResponseEntity<Object> inviteWorkmates(
-            @RequestBody @Valid InviteRequestDTO inviteRequest,       // @Valid was missing
-            @AuthenticationPrincipal CustomUserDetails userDetails) throws AccessDeniedException {
-        emailService.inviteUsers(userDetails.getUser(), inviteRequest);
+            @PathVariable Long workspaceId,
+            @RequestBody @Valid InviteRequestDTO inviteRequest,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            HttpServletRequest request) throws AccessDeniedException {
+
+        emailService.inviteUsers(userDetails.getUser(), inviteRequest, workspaceId);
+
         String message = "Invitations sent successfully to: " + String.join(", ", inviteRequest.getEmails());
         return ResponseHandler.generateResponse(message, HttpStatus.OK, null, request.getRequestURI());
     }

@@ -1,5 +1,7 @@
 package com.eclectics.collaboration.Tool.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,9 +13,10 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class InviteRequestDTO {
 
-    List<String> emails;
-    Long workspaceId;
+    @NotEmpty(message = "Email list cannot be empty")
+    private List<String> emails;
 
 }

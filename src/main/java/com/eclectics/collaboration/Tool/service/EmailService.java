@@ -9,10 +9,9 @@ import java.nio.file.AccessDeniedException;
 public interface EmailService {
     void sendAccountConfirmationEmail(String to, String confirmLink);
     void sendPasswordResetEmail(String to, String resetLink);
+    void inviteUsers(User owner, InviteRequestDTO inviteDto, Long workspaceId);
     void sendInvitationEmail(String to, String token, String workspaceName);
     void sendInviteRejectedEmail(String ownerEmail, String inviteeEmail, String workspaceName);
-    void inviteUsers(User owner, InviteRequestDTO inviteDto) throws AccessDeniedException;
-
     void sendNewSupportNotification(String submitterName, String submitterEmail, String issueName, String message);
 }
 

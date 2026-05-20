@@ -99,8 +99,8 @@ public class EmailServiceImpl implements EmailService {
 
     @Transactional
     @Override
-    public void inviteUsers(User owner, InviteRequestDTO inviteDto){
-        WorkSpace workspace = workspaceRepository.findById(inviteDto.getWorkspaceId())
+    public void inviteUsers(User owner, InviteRequestDTO inviteDto, Long workspaceId) {
+        WorkSpace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Workspace not found"));
 
         if (!workspace.getWorkSpaceOwnerId().getId().equals(owner.getId())) {
