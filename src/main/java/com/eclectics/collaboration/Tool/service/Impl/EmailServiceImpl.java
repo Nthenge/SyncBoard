@@ -107,7 +107,7 @@ public class EmailServiceImpl implements EmailService {
             throw new CollaborationExceptions.UnauthorizedException("Only the owner can invite others");
         }
 
-        for (String email : inviteDto.getEmails()) {
+        for (String email : inviteDto.getEmail()) {
             String token = UUID.randomUUID().toString();
 
             Invitation invite = new Invitation();
