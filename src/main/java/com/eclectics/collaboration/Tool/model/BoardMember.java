@@ -41,7 +41,12 @@ public class BoardMember {
 
     private LocalDateTime joinedAt;
 
+
     public BoardMember(Boards board, User user, BoardRole boardRole) {
+        this.board = board;
+        this.user = user;
+        this.role = boardRole;
+        this.joinedAt = LocalDateTime.now();
     }
 
     public void assertAdmin() {
