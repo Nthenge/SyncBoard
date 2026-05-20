@@ -4,27 +4,33 @@ import com.eclectics.collaboration.Tool.dto.*;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.response.ResponseHandler;
 import com.eclectics.collaboration.Tool.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.net.URI;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/user")
 @Slf4j
+@Tag(name = "User Management", description = "Operations for user registration, authentication, and profile management")
 public class UserController {
 
     private final UserService userService;
     private final HttpServletRequest request;
 
+    @Operation(summary = "Register a new user account")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Registration successful, verification email sent"),
+            @ApiResponse(responseCode = "400", description = "Invalid registration data")
+    })
     @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> registerUser(
             @RequestBody UserRegistrationRequestDTO requestDTO
@@ -37,14 +43,25 @@ public class UserController {
         );
     }
 
+    @Operation(summary = "Authenticate user and log in")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Login successful"),
+            @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    })
     @PostMapping("/login")
     public ResponseEntity<Object> loginUser(
             @RequestBody UserLoginRequestDTO loginRequest
     ) {
         UserLoginResponseDTO response = userService.userLogin(loginRequest);
-        return ResponseHandler.generateResponse("Login successful", HttpStatus.OK, response,request.getRequestURI());
+        return ResponseHandler.generateResponse("Login successful", HttpStatus.OK, response, request.getRequestURI());
     }
 
+    @Operation(summary = "Confirm user account via token")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Account confirmed successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid or broken confirmation token"),
+            @ApiResponse(responseCode = "409", description = "Account is already confirmed")
+    })
     @GetMapping("/confirm")
     public ResponseEntity<Object> confirmAccount(
             @RequestParam("token") String token
@@ -68,23 +85,39 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Request a password reset email link")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Password reset request processed successfully"),
+            @ApiResponse(responseCode = "404", description = "User email not found")
+    })
     @PostMapping("/reset-password-request")
     public ResponseEntity<Object> sendResetPasswordEmail(
             @RequestBody UserEmailDTO userEmailDTO
     ) {
         UserEmailDTO response = userService.userSendResetPassword(userEmailDTO);
-        return ResponseHandler.generateResponse("Reset password send",HttpStatus.CREATED,response,request.getRequestURI());
+        return ResponseHandler.generateResponse("Reset password send", HttpStatus.CREATED, response, request.getRequestURI());
     }
 
+    @Operation(summary = "Reset password using token link confirmation")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Password updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid or expired reset token")
+    })
     @PostMapping("/reset-password")
     public ResponseEntity<Object> resetPassword(
             @RequestParam("token") String token,
             @RequestParam("newPassword") String newPassword
     ) {
         userService.userUpdatePassword(token, newPassword);
-        return ResponseHandler.generateResponse("Password updated successfully.",HttpStatus.CREATED,null,request.getRequestURI());
+        return ResponseHandler.generateResponse("Password updated successfully.", HttpStatus.CREATED, null, request.getRequestURI());
     }
 
+    @Operation(summary = "Update account profile details")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "User profile updated successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized or missing token"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     @PutMapping("/update")
     public ResponseEntity<Object> updateProfile(
             @RequestHeader("Authorization") String tokenHeader,
@@ -92,26 +125,34 @@ public class UserController {
     ) {
         String token = tokenHeader.replace("Bearer ", "");
         UserRegistrationRequestDTO response = userService.updateUser(token, userDTO);
-        return ResponseHandler.generateResponse("User updated successfully",HttpStatus.CREATED, response, request.getRequestURI());
+        return ResponseHandler.generateResponse("User updated successfully", HttpStatus.CREATED, response, request.getRequestURI());
     }
 
+    @Operation(summary = "Log out user and invalidate current session token")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully logged out"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @PutMapping("/logout")
     public ResponseEntity<Object> userLogOut(
             @RequestHeader("Authorization") String tokenHeader
-    ){
+    ) {
         String token = tokenHeader.replace("Bearer ", "");
         userService.logOutUser(token);
-        return ResponseHandler.generateResponse("Logged Out",HttpStatus.OK, null, request.getRequestURI());
+        return ResponseHandler.generateResponse("Logged Out", HttpStatus.OK, null, request.getRequestURI());
     }
 
+    @Operation(summary = "Permanently delete user account")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Account deleted successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @DeleteMapping("/delete")
     public ResponseEntity<Object> deleteAccount(
             @RequestHeader("Authorization") String tokenHeader
     ) {
         String token = tokenHeader.replace("Bearer ", "");
         userService.userDeleteAccount(token);
-        return ResponseHandler.generateResponse("Account deleted successfully",HttpStatus.OK,null, request.getRequestURI());
+        return ResponseHandler.generateResponse("Account deleted successfully", HttpStatus.OK, null, request.getRequestURI());
     }
-
 }
-

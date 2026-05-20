@@ -6,6 +6,10 @@ import com.eclectics.collaboration.Tool.repository.UserRespository;
 import com.eclectics.collaboration.Tool.response.ResponseHandler;
 import com.eclectics.collaboration.Tool.security.CustomUserDetails;
 import com.eclectics.collaboration.Tool.service.BoardsService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,12 +23,16 @@ import java.util.List;
 @RestController
 @RequestMapping("/boards")
 @RequiredArgsConstructor
+@Tag(name = "Boards", description = "CRUD operations for Boards")
 public class BoardController {
 
     private final BoardsService boardService;
     private final HttpServletRequest request;
 
-    // GET /boards
+    @Operation(summary = "Get all Boards")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Boards fetched successfully")
+    })
     @GetMapping()
     public ResponseEntity<Object> getAllBoards(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -39,7 +47,11 @@ public class BoardController {
         );
     }
 
-    // GET /boards/{boardId}
+    @Operation(summary = "Get Board by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Board fetched successfully"),
+            @ApiResponse(responseCode = "404", description = "Board not found")
+    })
     @GetMapping("/{boardId}")
     public ResponseEntity<Object> getBoardById(
             @PathVariable Long boardId) {
@@ -54,11 +66,15 @@ public class BoardController {
         );
     }
 
-    // POST /boards  (workspaceId comes from request body)
-    @PostMapping("/{workspaceId}") // Clear, RESTful URL hierarchy
+    @Operation(summary = "Create a new Board")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Board created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request")
+    })
+    @PostMapping("/{workspaceId}")
     public ResponseEntity<Object> createBoard(
-            @PathVariable Long workspaceId, // Captures ID from the URL path
-            @RequestBody @Valid BoardsRequestDTO dto, // Request body handles board details
+            @PathVariable Long workspaceId,
+            @RequestBody @Valid BoardsRequestDTO dto,
             HttpServletRequest request) {
 
         BoardsResponseDTO response = boardService.createBoard(workspaceId, dto);
@@ -71,7 +87,11 @@ public class BoardController {
         );
     }
 
-    // PUT /boards/{boardId}
+    @Operation(summary = "Update an existing Board")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Board updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Board not found")
+    })
     @PutMapping("/{boardId}")
     public ResponseEntity<Object> updateBoard(
             @PathVariable Long boardId,
@@ -87,7 +107,11 @@ public class BoardController {
         );
     }
 
-    // DELETE /boards/{boardId}
+    @Operation(summary = "Delete a Board")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Board deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Board not found")
+    })
     @DeleteMapping("/{boardId}")
     public ResponseEntity<Object> deleteBoard(
             @PathVariable Long boardId) {

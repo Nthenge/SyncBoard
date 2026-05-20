@@ -5,6 +5,10 @@ import com.eclectics.collaboration.Tool.dto.RefreshTokenRequest;
 import com.eclectics.collaboration.Tool.model.RefreshToken;
 import com.eclectics.collaboration.Tool.security.JwtUtil;
 import com.eclectics.collaboration.Tool.service.RefreshTokenService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,11 +20,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Tag(name = "Authentication", description = "Operations for user session authentication and token management")
 public class RefreshTokenController {
 
     private final RefreshTokenService refreshTokenService;
     private final JwtUtil jwtUtil;
 
+    @Operation(summary = "Renew expired access token using a valid refresh token")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Access token renewed successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request payload"),
+            @ApiResponse(responseCode = "401", description = "Refresh token is expired or invalid")
+    })
     @PostMapping("/refresh-token")
     public ResponseEntity<AuthResponse> refreshToken(@RequestBody @Valid RefreshTokenRequest request) {
 

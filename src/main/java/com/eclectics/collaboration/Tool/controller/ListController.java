@@ -6,6 +6,10 @@ import com.eclectics.collaboration.Tool.dto.ReorderListsRequestDTO;
 import com.eclectics.collaboration.Tool.response.ResponseHandler;
 import com.eclectics.collaboration.Tool.security.CustomUserDetails;
 import com.eclectics.collaboration.Tool.service.ListService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,12 +22,16 @@ import java.util.List;
 @RestController
 @RequestMapping("/boards")
 @RequiredArgsConstructor
+@Tag(name = "Lists", description = "CRUD and reordering operations for board lists (columns)")
 public class ListController {
 
     private final ListService listService;
     private final HttpServletRequest request;
 
-    // GET /boards/{boardId}/lists
+    @Operation(summary = "Get all lists belonging to a board")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "All board lists fetched successfully")
+    })
     @GetMapping("/{boardId}/lists")
     public ResponseEntity<Object> getLists(
             @PathVariable Long boardId) {
@@ -37,7 +45,11 @@ public class ListController {
         );
     }
 
-    // POST /lists
+    @Operation(summary = "Create a new list")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "List created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request")
+    })
     @PostMapping("/lists")
     public ResponseEntity<Object> createList(
             @RequestBody ListRequestDTO dto,
@@ -52,7 +64,11 @@ public class ListController {
         );
     }
 
-    // PUT /lists/{listId}
+    @Operation(summary = "Update an existing list's details")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List updated successfully"),
+            @ApiResponse(responseCode = "404", description = "List not found")
+    })
     @PutMapping("/lists/{listId}")
     public ResponseEntity<Object> updateList(
             @PathVariable Long listId,
@@ -68,7 +84,11 @@ public class ListController {
         );
     }
 
-    // DELETE /lists/{listId}
+    @Operation(summary = "Delete a list")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "List not found")
+    })
     @DeleteMapping("/lists/{listId}")
     public ResponseEntity<Object> deleteList(
             @PathVariable Long listId,
@@ -83,7 +103,11 @@ public class ListController {
         );
     }
 
-    // PUT /boards/{boardId}/lists/reorder
+    @Operation(summary = "Reorder lists within a board")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lists reordered successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid list ordering array")
+    })
     @PutMapping("/{boardId}/lists/reorder")
     public ResponseEntity<Object> reorderLists(
             @PathVariable Long boardId,
