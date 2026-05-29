@@ -6,6 +6,7 @@ import com.eclectics.collaboration.Tool.model.Invitation;
 import com.eclectics.collaboration.Tool.model.User;
 import com.eclectics.collaboration.Tool.model.WorkSpace;
 import com.eclectics.collaboration.Tool.repository.InvitationRepository;
+import com.eclectics.collaboration.Tool.repository.UserRespository;
 import com.eclectics.collaboration.Tool.repository.WorkSpaceReposiroty;
 import com.eclectics.collaboration.Tool.service.EmailService;
 import com.eclectics.collaboration.Tool.service.InvitationService;
@@ -23,6 +24,7 @@ public class InvitationServiceImpl implements InvitationService {
     private final InvitationRepository invitationRepository;
     private final WorkSpaceReposiroty workSpaceRepository;
     private final EmailService emailService;
+    private final UserRespository userRepository;
 
     @Transactional
     @Override
@@ -39,8 +41,13 @@ public class InvitationServiceImpl implements InvitationService {
             throw new CollaborationExceptions.BadRequestException("This invite was sent to a different email address.");
         }
 
-        WorkSpace ws = invite.getWorkspace();
-        ws.getMembers().add(invitee);
+        User managedInvitee = userRepository.findById(invitee.getId())
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found."));
+
+        WorkSpace ws = workSpaceRepository.findById(invite.getWorkspace().getId())
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Workspace not found."));
+
+        ws.getMembers().add(managedInvitee);
 
         workSpaceRepository.save(ws);
         invitationRepository.delete(invite);
@@ -57,19 +64,20 @@ public class InvitationServiceImpl implements InvitationService {
             throw new CollaborationExceptions.BadRequestException("This invitation has expired.");
         }
 
-        // Only the intended recipient can reject
         if (!invite.getEmail().equalsIgnoreCase(invitee.getEmail())) {
             throw new CollaborationExceptions.BadRequestException("This invite was sent to a different email address.");
         }
 
-        WorkSpace workspace = invite.getWorkspace();
-        User owner = workspace.getWorkSpaceOwnerId();
+        WorkSpace workspace = workSpaceRepository.findById(invite.getWorkspace().getId())
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Workspace not found."));
 
-        // Delete the invitation before sending email (so it's gone even if email fails)
+        String ownerEmail = workspace.getWorkSpaceOwnerId().getEmail();
+        String workspaceName = workspace.getWorkSpaceName();
+        String inviteeEmail = invitee.getEmail();
+
         invitationRepository.delete(invite);
 
-        // Notify the workspace owner
-        emailService.sendInviteRejectedEmail(owner.getEmail(), invitee.getEmail(), workspace.getWorkSpaceName());
+        emailService.sendInviteRejectedEmail(ownerEmail, inviteeEmail, workspaceName);
     }
 
 
@@ -83,7 +91,7 @@ public class InvitationServiceImpl implements InvitationService {
 
         WorkSpace workspace = invite.getWorkspace();
 
-        // Only the workspace owner can manually delete an invite
+        // Only the workspace owner can manually delete a invite
         if (!workspace.getWorkSpaceOwnerId().getId().equals(requester.getId())) {
             throw new CollaborationExceptions.UnauthorizedException("Only the workspace owner can delete invitations.");
         }
