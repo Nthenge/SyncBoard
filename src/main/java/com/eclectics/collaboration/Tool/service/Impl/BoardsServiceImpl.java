@@ -83,8 +83,8 @@ public class BoardsServiceImpl implements BoardsService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BoardsResponseDTO> getBoardsForUser(Long userId) {
-        // Returns all boards where the user is a member
         return boardMemberRepository.findAllByUserId(userId)
                 .stream()
                 .map(BoardMember::getBoard)

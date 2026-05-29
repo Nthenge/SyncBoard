@@ -47,6 +47,25 @@ public class BoardController {
         );
     }
 
+    @Operation(summary = "Get all Boards by Workspace")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Boards fetched successfully"),
+            @ApiResponse(responseCode = "404", description = "Workspace not found")
+    })
+    @GetMapping("/workspace/{workspaceId}")
+    public ResponseEntity<Object> getBoardsByWorkspace(
+            @PathVariable Long workspaceId) {
+
+        List<BoardsResponseDTO> boards = boardService.getBoardsByWorkspace(workspaceId);
+
+        return ResponseHandler.generateResponse(
+                "Boards fetched successfully",
+                HttpStatus.OK,
+                boards,
+                request.getRequestURI()
+        );
+    }
+
     @Operation(summary = "Get Board by ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Board fetched successfully"),
