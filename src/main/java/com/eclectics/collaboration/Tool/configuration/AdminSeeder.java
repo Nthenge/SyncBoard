@@ -26,8 +26,8 @@ public class AdminSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        seedAdmin(adminOneEmail, "Sheilah", adminOnePassword);
-        seedAdmin(adminTwoEmail, "Abraham", adminTwoPassword);
+        seedAdmin(adminOneEmail, "Abraham", adminOnePassword);
+        seedAdmin(adminTwoEmail, "Sheilah", adminTwoPassword);
     }
 
     private void seedAdmin(String email, String firstName, String password) {
