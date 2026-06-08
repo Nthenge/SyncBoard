@@ -46,7 +46,7 @@ public class ListServiceImpl implements ListService {
         ListEntity list = listMapper.toEntity(dto, board);
 
         if (list.getPosition() == null) {
-            Integer maxPos = listRepository.findByBoardIdOrderByPosition(boardId).stream()
+            Integer maxPos = listRepository.findByBoard_IdOrderByPosition(boardId).stream()
                     .map(ListEntity::getPosition)
                     .max(Integer::compareTo)
                     .orElse(0);
@@ -60,7 +60,7 @@ public class ListServiceImpl implements ListService {
 
     @Override
     public List<ListResponseDTO> getListsByBoard(Long boardId) {
-        return listRepository.findByBoardIdOrderByPosition(boardId)
+        return listRepository.findByBoard_IdOrderByPosition(boardId)
                 .stream()
                 .map(listMapper::toDto)
                 .toList();
@@ -127,7 +127,7 @@ public class ListServiceImpl implements ListService {
         }
 
         // Fetch all lists for this board in one query and index by id
-        Map<Long, ListEntity> listMap = listRepository.findByBoardIdOrderByPosition(boardId)
+        Map<Long, ListEntity> listMap = listRepository.findByBoard_IdOrderByPosition(boardId)
                 .stream()
                 .collect(Collectors.toMap(ListEntity::getId, l -> l));
 

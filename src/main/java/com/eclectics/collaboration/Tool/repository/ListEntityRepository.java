@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface ListEntityRepository extends JpaRepository<ListEntity, Long> {
-    List<ListEntity> findByBoardIdOrderByPosition(Long boardId);
+    List<ListEntity> findByBoard_IdOrderByPosition(Long boardId);
 }

@@ -12,6 +12,8 @@ public interface ListMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "board", source = "board")
+    @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
+    @Mapping(target = "cards", ignore = true)
     ListEntity toEntity(ListRequestDTO dto, Boards board);
 
     @Mapping(target = "boardId", source = "board.id")

@@ -1,21 +1,25 @@
 package com.eclectics.collaboration.Tool.dto;
 
+import com.eclectics.collaboration.Tool.enums.OveralRole;
+
 public class UserLoginResponseDTO {
     private Long id;
     private String email;
     private String token;
     private String refreshToken;
     private String firstName;
+    private OveralRole role;
 
     public UserLoginResponseDTO() {
     }
 
-    public UserLoginResponseDTO(Long id, String email, String token, String firstName, String refreshToken) {
+    public UserLoginResponseDTO(Long id, String email, String token, String firstName, String refreshToken, OveralRole role) {
         this.id = id;
         this.email = email;
         this.token = token;
         this.firstName = firstName;
         this.refreshToken = refreshToken;
+        this.role = role;
     }
 
     public Long getId() {
@@ -56,5 +60,13 @@ public class UserLoginResponseDTO {
 
     public void setRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
+    }
+
+    public OveralRole getRole() {
+        return role;
+    }
+
+    public void setRole(OveralRole role) {
+        this.role = role;
     }
 }

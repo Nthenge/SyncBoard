@@ -45,7 +45,7 @@ public class RefreshTokenController {
 
         // Issue a new access token
         String email = refreshToken.getUser().getEmail();
-        String newAccessToken = jwtUtil.generateToken(email);
+        String newAccessToken = jwtUtil.generateToken(email, refreshToken.getUser().getRole());
 
         return ResponseEntity.ok(new AuthResponse(newAccessToken, requestToken));
     }

@@ -96,10 +96,10 @@ public class UserServiceImpl implements UserService {
             throw new CollaborationExceptions.BadRequestException("Account not confirmed. Please check your email.");
         }
 
-        String token = jwtUtil.generateToken(user.getEmail());
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getEmail());
 
-        return new UserLoginResponseDTO(user.getId(), user.getEmail(), token, user.getFirstName(), refreshToken.getToken());
+        return new UserLoginResponseDTO(user.getId(), user.getEmail(), token, user.getFirstName(), refreshToken.getToken(),user.getRole());
     }
 
     @Override
@@ -189,7 +189,7 @@ public class UserServiceImpl implements UserService {
         refreshTokenService.verifyExpiration(refreshToken); // throws if expired
 
         String email = refreshToken.getUser().getEmail();
-        String newAccessToken = jwtUtil.generateToken(email);
+        String newAccessToken = jwtUtil.generateToken(email,refreshToken.getUser().getRole());
 
         return new TokenRefreshResponseDTO(newAccessToken, requestToken);
     }

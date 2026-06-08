@@ -1,5 +1,6 @@
 package com.eclectics.collaboration.Tool.security;
 
+import com.eclectics.collaboration.Tool.enums.OveralRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -25,9 +26,10 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
     }
 
-    public String generateToken(String email) {
+    public String generateToken(String email, OveralRole role) {
         return Jwts.builder()
                 .setSubject(email)
+                .claim("role", role.name())
                 .setIssuedAt(new Date())
                 .setId(UUID.randomUUID().toString())
                 .setExpiration(new Date(System.currentTimeMillis() + SESSION_EXPIRATION_TIME))

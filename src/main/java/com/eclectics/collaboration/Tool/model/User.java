@@ -1,5 +1,6 @@
 package com.eclectics.collaboration.Tool.model;
 
+import com.eclectics.collaboration.Tool.enums.OveralRole;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -38,6 +39,10 @@ public class User {
 
     private LocalDateTime createdAt;
     private boolean enabled = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OveralRole role = OveralRole.USER;
 
     @OneToMany(mappedBy = "workSpaceOwnerId", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore

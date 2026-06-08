@@ -31,6 +31,7 @@ spring:
           starttls:
             enable: true
             required: true
+
 brevo:
   api-key: ${BREVO_API_KEY}
   from-email: ${BREVO_FROM_EMAIL}
@@ -46,6 +47,17 @@ alibaba:
       access-key-id: ${OSS_KEY}
       access-key-secret: ${OSS_SECRET}
       bucket-name: jagarage
+
+jwt:
+  secret: ${JWT_SECRET}
+
+admin:
+  one:
+    email: ${ADMIN_ONE_EMAIL}
+    password: ${ADMIN_ONE_PASSWORD}
+  two:
+    email: ${ADMIN_TWO_EMAIL}
+    password: ${ADMIN_TWO_PASSWORD}
 
 app:
   message: "This is the Production environment"
