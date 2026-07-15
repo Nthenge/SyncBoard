@@ -37,7 +37,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
                 "https://syncboard-frontend-814g.onrender.com",
-                "http://192.168.137.1:4200/"
+                "http://192.168.137.1:4200/",
+                "http://localhost:4200/"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
