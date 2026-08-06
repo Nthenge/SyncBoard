@@ -66,4 +66,13 @@ public class BoardMemberController {
         service.changeRole(boardId, user.getId(), userId, role);
         return ResponseEntity.ok().build();
     }
+
+    @Operation(summary = "Get all members of a board")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Members fetched successfully")
+    })
+    @GetMapping
+    public ResponseEntity<?> getMembers(@PathVariable Long boardId) {
+        return ResponseEntity.ok(service.getMembers(boardId));
+    }
 }

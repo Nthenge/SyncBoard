@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Setter
 @Getter
@@ -24,5 +25,8 @@ public class CardResponseDTO {
     private Long createdById;
     private Integer version;
     private LocalDateTime createdAt;
+    private Long assigneeId;
+    private String assigneeName;
+    private List<LabelResponseDTO> labels;
 
 }

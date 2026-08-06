@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface InvitationRepository extends JpaRepository<Invitation, Long> {
     Optional<Invitation> findByInviteToken(String token);
     List<Invitation> findAllByWorkspaceId(Long workspaceId);
+    List<Invitation> findAllByEmailIgnoreCase(String email);
 }

@@ -107,4 +107,12 @@ public class BoardMemberServiceImpl implements BoardMemberService {
 
         target.changeRole(newRole);
     }
+
+    @Override
+    public List<BoardMemberResponseDTO> getMembers(Long boardId) {
+        return boardMemberRepository.findByBoardId(boardId)
+                .stream()
+                .map(mapper::toDto)
+                .toList();
+    }
 }

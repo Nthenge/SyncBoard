@@ -3,6 +3,8 @@ package com.eclectics.collaboration.Tool.controller;
 import com.eclectics.collaboration.Tool.dto.CardRequestDTO;
 import com.eclectics.collaboration.Tool.dto.CardMoveRequestDTO;
 import com.eclectics.collaboration.Tool.dto.CardResponseDTO;
+import com.eclectics.collaboration.Tool.dto.CardAssigneeRequestDTO;
+import com.eclectics.collaboration.Tool.security.CustomUserDetails;
 import com.eclectics.collaboration.Tool.service.CardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -11,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,9 +53,9 @@ public class CardController {
     @PostMapping()
     public ResponseEntity<CardResponseDTO> createCard(
             @RequestBody CardRequestDTO dto,
-            @RequestAttribute("userId") Long userId) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(cardService.createCard(dto.getListId(), dto, userId));
+                .body(cardService.createCard(dto.getListId(), dto, userDetails.getId()));
     }
 
     @Operation(summary = "Update an existing card's details")
@@ -64,8 +67,8 @@ public class CardController {
     public ResponseEntity<CardResponseDTO> updateCard(
             @PathVariable Long cardId,
             @RequestBody CardRequestDTO dto,
-            @RequestAttribute("userId") Long userId) {
-        return ResponseEntity.ok(cardService.updateCard(cardId, userId, dto));
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(cardService.updateCard(cardId, userDetails.getId(), dto));
     }
 
     @Operation(summary = "Move a card to a different list or position")
@@ -77,8 +80,8 @@ public class CardController {
     public ResponseEntity<CardResponseDTO> moveCard(
             @PathVariable Long cardId,
             @RequestBody CardMoveRequestDTO dto,
-            @RequestAttribute("userId") Long userId) {
-        return ResponseEntity.ok(cardService.moveCard(cardId, dto, userId));
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(cardService.moveCard(cardId, dto, userDetails.getId()));
     }
 
     @Operation(summary = "Delete a card")
@@ -89,8 +92,37 @@ public class CardController {
     @DeleteMapping("/{cardId}")
     public ResponseEntity<Void> deleteCard(
             @PathVariable Long cardId,
-            @RequestAttribute("userId") Long userId) {
-        cardService.deleteCard(cardId, userId);
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        cardService.deleteCard(cardId, userDetails.getId());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Reassign a card to a different board member")
+    @PutMapping("/{cardId}/assignee")
+    public ResponseEntity<CardResponseDTO> reassignCard(
+            @PathVariable Long cardId,
+            @RequestBody CardAssigneeRequestDTO dto,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(cardService.reassignCard(cardId, dto.getUserId(), userDetails.getId()));
+    }
+
+    @Operation(summary = "Attach a label to a card")
+    @PostMapping("/{cardId}/labels/{labelId}")
+    public ResponseEntity<Void> attachLabel(
+            @PathVariable Long cardId,
+            @PathVariable Long labelId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        cardService.attachLabel(cardId, labelId, userDetails.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @Operation(summary = "Detach a label from a card")
+    @DeleteMapping("/{cardId}/labels/{labelId}")
+    public ResponseEntity<Void> detachLabel(
+            @PathVariable Long cardId,
+            @PathVariable Long labelId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        cardService.detachLabel(cardId, labelId, userDetails.getId());
         return ResponseEntity.noContent().build();
     }
 }

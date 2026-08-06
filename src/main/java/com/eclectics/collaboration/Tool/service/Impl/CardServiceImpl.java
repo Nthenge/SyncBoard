@@ -6,6 +6,7 @@ import com.eclectics.collaboration.Tool.dto.CardResponseDTO;
 import com.eclectics.collaboration.Tool.enums.BoardRole;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.mapper.CardMapper;
+import com.eclectics.collaboration.Tool.mapper.LabelMapper;
 import com.eclectics.collaboration.Tool.model.*;
 import com.eclectics.collaboration.Tool.repository.*;
 import com.eclectics.collaboration.Tool.service.CardService;
@@ -25,6 +26,9 @@ public class CardServiceImpl implements CardService {
     private final CardMapper cardMapper;
     private final BoardMemberRepository boardMemberRepository;
     private final CardAssigneeRepository cardAssigneeRepository;
+    private final CardLabelRepository cardLabelRepository;
+    private final LabelRepository labelRepository;
+    private final LabelMapper labelMapper;
 
     // ─── CREATE ───────────────────────────────────────────────────────────────
 
@@ -61,7 +65,7 @@ public class CardServiceImpl implements CardService {
 
         cardAssigneeRepository.save(new CardAssignee(savedCard, user));
 
-        return cardMapper.toDto(savedCard);
+        return enrich(savedCard);
     }
 
     // ─── READ ─────────────────────────────────────────────────────────────────
@@ -70,7 +74,7 @@ public class CardServiceImpl implements CardService {
     public List<CardResponseDTO> getCardsByList(Long listId) {
         return cardRepository.findByListIdOrderByPosition(listId)
                 .stream()
-                .map(cardMapper::toDto)
+                .map(this::enrich)
                 .toList();
     }
 
@@ -79,7 +83,7 @@ public class CardServiceImpl implements CardService {
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() ->
                         new CollaborationExceptions.ResourceNotFoundException("Card not found"));
-        return cardMapper.toDto(card);
+        return enrich(card);
     }
 
     // ─── UPDATE ───────────────────────────────────────────────────────────────
@@ -103,7 +107,7 @@ public class CardServiceImpl implements CardService {
         }
 
         cardMapper.updateEntityFromDto(dto, card);
-        return cardMapper.toDto(cardRepository.save(card));
+        return enrich(cardRepository.save(card));
     }
 
     // ─── MOVE ─────────────────────────────────────────────────────────────────
@@ -162,7 +166,7 @@ public class CardServiceImpl implements CardService {
         card.setList(targetList);
         card.setPosition(insertAt + 1);
 
-        return cardMapper.toDto(cardRepository.save(card));
+        return enrich(cardRepository.save(card));
     }
 
     // ─── DELETE ───────────────────────────────────────────────────────────────
@@ -186,5 +190,76 @@ public class CardServiceImpl implements CardService {
         }
 
         cardRepository.delete(card);
+    }
+
+    @Override
+    @Transactional
+    public CardResponseDTO reassignCard(Long cardId, Long newAssigneeUserId, Long requestingUserId) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Card not found"));
+
+        Long boardId = card.getList().getBoard().getId();
+
+        boardMemberRepository.findByBoardIdAndUserId(boardId, requestingUserId)
+                .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("User is not a member of the board"));
+
+        boardMemberRepository.findByBoardIdAndUserId(boardId, newAssigneeUserId)
+                .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("New assignee is not a member of the board"));
+
+        User newAssignee = userRepository.findById(newAssigneeUserId)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
+
+        cardAssigneeRepository.findByCardId(cardId)
+                .forEach(existing -> cardAssigneeRepository.deleteByCardIdAndUserId(cardId, existing.getUser().getId()));
+
+        cardAssigneeRepository.save(new CardAssignee(card, newAssignee));
+
+        return enrich(card);
+    }
+
+    @Override
+    @Transactional
+    public void attachLabel(Long cardId, Long labelId, Long userId) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Card not found"));
+
+        boardMemberRepository.findByBoardIdAndUserId(card.getList().getBoard().getId(), userId)
+                .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("User is not a member of the board"));
+
+        if (cardLabelRepository.existsByCardIdAndLabelId(cardId, labelId)) return;
+
+        Label label = labelRepository.findById(labelId)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Label not found"));
+
+        cardLabelRepository.save(new CardLabel(card, label));
+    }
+
+    @Override
+    @Transactional
+    public void detachLabel(Long cardId, Long labelId, Long userId) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Card not found"));
+
+        boardMemberRepository.findByBoardIdAndUserId(card.getList().getBoard().getId(), userId)
+                .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("User is not a member of the board"));
+
+        cardLabelRepository.deleteByCardIdAndLabelId(cardId, labelId);
+    }
+
+    private CardResponseDTO enrich(Card card) {
+        CardResponseDTO dto = cardMapper.toDto(card);
+
+        cardAssigneeRepository.findByCardId(card.getId()).stream().findFirst().ifPresent(ca -> {
+            dto.setAssigneeId(ca.getUser().getId());
+            dto.setAssigneeName(ca.getUser().getFullName());
+        });
+
+        dto.setLabels(
+                cardLabelRepository.findByCardId(card.getId()).stream()
+                        .map(cl -> labelMapper.toDto(cl.getLabel()))
+                        .toList()
+        );
+
+        return dto;
     }
 }

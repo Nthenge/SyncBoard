@@ -1,6 +1,7 @@
 package com.eclectics.collaboration.Tool.service.Impl;
 
 import com.eclectics.collaboration.Tool.dto.InvitationResponseDTO;
+import com.eclectics.collaboration.Tool.dto.MyInvitationResponseDTO;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.model.Invitation;
 import com.eclectics.collaboration.Tool.model.User;
@@ -119,6 +120,21 @@ public class InvitationServiceImpl implements InvitationService {
                         .workspaceName(workspace.getWorkSpaceName())
                         .expiryDate(invite.getExpiryDate())
                         .expired(invite.getExpiryDate().isBefore(LocalDateTime.now()))
+                        .build())
+                .toList();
+    }
+
+    // ─── GET ALL FOR CURRENT USER (INBOX) ──────────────────────────────────────
+
+    @Override
+    public List<MyInvitationResponseDTO> getMyInvitations(User user) {
+        return invitationRepository.findAllByEmailIgnoreCase(user.getEmail())
+                .stream()
+                .filter(invite -> !invite.getExpiryDate().isBefore(LocalDateTime.now()))
+                .map(invite -> MyInvitationResponseDTO.builder()
+                        .token(invite.getInviteToken())
+                        .workspaceName(invite.getWorkspace().getWorkSpaceName())
+                        .expiryDate(invite.getExpiryDate())
                         .build())
                 .toList();
     }

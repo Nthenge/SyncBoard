@@ -20,4 +20,8 @@ public interface CardService {
     CardResponseDTO moveCard(Long cardId, CardMoveRequestDTO dto, Long userId);
 
     void deleteCard(Long cardId, Long userId);
+
+    CardResponseDTO reassignCard(Long cardId, Long newAssigneeUserId, Long requestingUserId);
+    void attachLabel(Long cardId, Long labelId, Long userId);
+    void detachLabel(Long cardId, Long labelId, Long userId);
 }

@@ -1,9 +1,6 @@
 package com.eclectics.collaboration.Tool.controller;
 
-import com.eclectics.collaboration.Tool.dto.InvitationResponseDTO;
-import com.eclectics.collaboration.Tool.dto.InviteRequestDTO;
-import com.eclectics.collaboration.Tool.dto.WorkSpaceRequestDTO;
-import com.eclectics.collaboration.Tool.dto.WorkSpaceResponseDTO;
+import com.eclectics.collaboration.Tool.dto.*;
 import com.eclectics.collaboration.Tool.model.User;
 import com.eclectics.collaboration.Tool.response.ResponseHandler;
 import com.eclectics.collaboration.Tool.security.CustomUserDetails;
@@ -125,6 +122,7 @@ public class WorkSpaceController {
             @ApiResponse(responseCode = "403", description = "Forbidden - missing tracking permissions"),
             @ApiResponse(responseCode = "404", description = "Invitation tracking ID not found")
     })
+
     @DeleteMapping("/invitations/{invitationId}")
     public ResponseEntity<Object> deleteInvitation(
             @PathVariable Long invitationId,
@@ -145,5 +143,15 @@ public class WorkSpaceController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<InvitationResponseDTO> invitations = invitationService.getWorkspaceInvitations(workspaceId, userDetails.getUser());
         return ResponseHandler.generateResponse("Workspace invitations fetched", HttpStatus.OK, invitations, request.getRequestURI());
+    }
+
+    @Operation(summary = "Get all pending invitations addressed to the authenticated user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pending invitations fetched successfully")
+    })
+    @GetMapping("/my-invitations")
+    public ResponseEntity<Object> getMyInvitations(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<MyInvitationResponseDTO> invitations = invitationService.getMyInvitations(userDetails.getUser());
+        return ResponseHandler.generateResponse("Your pending invitations", HttpStatus.OK, invitations, request.getRequestURI());
     }
 }
