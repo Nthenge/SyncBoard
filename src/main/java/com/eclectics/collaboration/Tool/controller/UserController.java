@@ -155,4 +155,17 @@ public class UserController {
         userService.userDeleteAccount(token);
         return ResponseHandler.generateResponse("Account deleted successfully", HttpStatus.OK, null, request.getRequestURI());
     }
+
+    @Operation(summary = "Exchange a valid refresh token for a new access token")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Token refreshed successfully"),
+            @ApiResponse(responseCode = "401", description = "Refresh token invalid or expired")
+    })
+    @PostMapping("/refresh")
+    public ResponseEntity<Object> refreshToken(
+            @RequestBody TokenRefreshRequestDTO requestDTO
+    ) {
+        TokenRefreshResponseDTO response = userService.refreshToken(requestDTO.getRefreshToken());
+        return ResponseHandler.generateResponse("Token refreshed successfully", HttpStatus.OK, response, request.getRequestURI());
+    }
 }

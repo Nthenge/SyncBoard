@@ -7,8 +7,13 @@ import com.eclectics.collaboration.Tool.model.ListEntity;
 import com.eclectics.collaboration.Tool.model.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
-@Mapper(componentModel = "spring")
+@Mapper(
+        componentModel = "spring",
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
+)
 public interface CardMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -23,11 +28,10 @@ public interface CardMapper {
     @Mapping(target = "createdById", source = "createdBy.id")
     CardResponseDTO toDto(Card entity);
 
-    @Mapping(target = "title", ignore = true)
-    @Mapping(target = "position", ignore = true)
-    @Mapping(target = "description", ignore = true)
-    @Mapping(target = "priority", ignore = true)
-    @Mapping(target = "dueDate", ignore = true)
-    Card updateEntityFromDto(CardRequestDTO dto, Card card);
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "version", ignore = true)
+    @Mapping(target = "list", ignore = true)
+    void updateEntityFromDto(CardRequestDTO dto, @MappingTarget Card card);
 }
-

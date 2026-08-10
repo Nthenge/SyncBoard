@@ -107,6 +107,11 @@ public class CardServiceImpl implements CardService {
         }
 
         cardMapper.updateEntityFromDto(dto, card);
+
+        if (Boolean.TRUE.equals(dto.getClearDueDate())) {
+            card.setDueDate(null);
+        }
+
         return enrich(cardRepository.save(card));
     }
 
@@ -189,6 +194,7 @@ public class CardServiceImpl implements CardService {
             throw new CollaborationExceptions.UnauthorizedException("Cannot delete this card");
         }
 
+        cardAssigneeRepository.deleteByCardId(card.getId());
         cardRepository.delete(card);
     }
 

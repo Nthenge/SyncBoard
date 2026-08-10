@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface CardRepository extends JpaRepository<Card, Long> {
     List<Card> findByListIdOrderByPosition(Long listId);
+    void deleteById(Long cardId);
 }

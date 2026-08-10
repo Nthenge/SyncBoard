@@ -4,10 +4,13 @@ import com.eclectics.collaboration.Tool.model.User;
 import com.eclectics.collaboration.Tool.repository.UserRespository;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,6 +21,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
@@ -28,7 +32,7 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
-            throws java.io.IOException, jakarta.servlet.ServletException {
+            throws IOException, ServletException {
 
         String authHeader = request.getHeader("Authorization");
 
@@ -41,13 +45,11 @@ public class JwtFilter extends OncePerRequestFilter {
                 Boolean isRevoked = redisTemplate.hasKey("revoked_token:" + tokenId);
 
                 if (Boolean.TRUE.equals(isRevoked)) {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"message\": \"Token has been logged out.\"}");
+                    sendUnauthorizedResponse(response, "Token has been logged out.");
                     return;
                 }
 
-                // 2. Proceed with standard Email extraction and Validation
+                // 2. Extract Email and Validate Token
                 String email = jwtUtil.extractEmail(token);
 
                 if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -66,14 +68,29 @@ public class JwtFilter extends OncePerRequestFilter {
                     }
                 }
             } catch (ExpiredJwtException e) {
-                System.err.println("JWT Expired: " + e.getMessage());
-            } catch (MalformedJwtException e) {
-                System.err.println("JWT Malformed: " + e.getMessage());
+                log.warn("JWT Expired: {}", e.getMessage());
+                sendUnauthorizedResponse(response, "JWT token has expired.");
+                return; // Stop filter chain execution!
+            } catch (MalformedJwtException | SignatureException e) {
+                log.warn("Invalid JWT: {}", e.getMessage());
+                sendUnauthorizedResponse(response, "Invalid JWT token.");
+                return; // Stop filter chain execution!
             } catch (Exception e) {
-                System.err.println("Authentication failed: " + e.getMessage());
+                log.error("Authentication failed: {}", e.getMessage());
+                sendUnauthorizedResponse(response, "Authentication failed.");
+                return; // Stop filter chain execution!
             }
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void sendUnauthorizedResponse(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401 status
+        response.setContentType("application/json");
+        response.getWriter().write("{"
+                + "\"success\": false,"
+                + "\"message\": \"" + message + "\""
+                + "}");
     }
 }

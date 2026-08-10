@@ -26,6 +26,7 @@ public class ListServiceImpl implements ListService {
     private final CardRepository cardRepository;
     private final ListMapper listMapper;
     private final BoardMemberRepository boardMemberRepository;
+    private final CardAssigneeRepository cardAssigneeRepository;
 
     // ─── CREATE ───────────────────────────────────────────────────────────────
 
@@ -40,7 +41,7 @@ public class ListServiceImpl implements ListService {
                 .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("User is not a member of the board"));
 
         if (member.getRole() != BoardRole.ADMIN) {
-            throw new CollaborationExceptions.UnauthorizedException("Only admins can create lists");
+            throw new CollaborationExceptions.UnauthorizedException("Only workspace admin can create a list.");
         }
 
         ListEntity list = listMapper.toEntity(dto, board);
@@ -106,10 +107,12 @@ public class ListServiceImpl implements ListService {
             throw new CollaborationExceptions.UnauthorizedException("Only admins can delete lists");
         }
 
-        list.getCards().forEach(cardRepository::delete);
+        list.getCards().forEach(card -> {
+            cardAssigneeRepository.deleteByCardId(card.getId()); // ← delete children first
+            cardRepository.delete(card);
+        });
         listRepository.delete(list);
     }
-
     // ─── REORDER ──────────────────────────────────────────────────────────────
 
     @Transactional

@@ -21,5 +21,6 @@ public class CardRequestDTO {
     private Priority priority;
     private LocalDateTime dueDate;
     private Integer position;
+    private Boolean clearDueDate;
 }
 
