@@ -15,4 +15,9 @@ public interface WorkSpaceService {
 
     @Transactional
     void deleteWorkspace(Long workspaceId, User user);
+
+    @Transactional
+    boolean toggleStarWorkspace(Long workspaceId, Long userId);
+
+    List<WorkSpaceResponseDTO> getStarredWorkspaces(Long userId);
 }

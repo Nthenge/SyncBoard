@@ -28,7 +28,6 @@ public class Boards {
     private String boardDescription;
     private String boardCreatedBy;
     private LocalDateTime boardCreatedAt;
-    private boolean isStarred;
 
     public void assertWorkspaceMember(User user) {
         if (!workSpaceId.getMembers().contains(user)) {

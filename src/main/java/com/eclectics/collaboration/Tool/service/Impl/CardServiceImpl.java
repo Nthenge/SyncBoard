@@ -1,5 +1,6 @@
 package com.eclectics.collaboration.Tool.service.Impl;
 
+import com.eclectics.collaboration.Tool.dto.AssignedCardResponseDTO;
 import com.eclectics.collaboration.Tool.dto.CardMoveRequestDTO;
 import com.eclectics.collaboration.Tool.dto.CardRequestDTO;
 import com.eclectics.collaboration.Tool.dto.CardResponseDTO;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -29,6 +31,7 @@ public class CardServiceImpl implements CardService {
     private final CardLabelRepository cardLabelRepository;
     private final LabelRepository labelRepository;
     private final LabelMapper labelMapper;
+    private final UserRecentBoardRepository recentBoardRepository;
 
     // ─── CREATE ───────────────────────────────────────────────────────────────
 
@@ -61,9 +64,12 @@ public class CardServiceImpl implements CardService {
             card.setPosition(maxPos + 1);
         }
 
+        card.setUpdatedAt(LocalDateTime.now());
         Card savedCard = cardRepository.save(card);
 
         cardAssigneeRepository.save(new CardAssignee(savedCard, user));
+
+        trackActivity(user, board, list, savedCard);
 
         return enrich(savedCard);
     }
@@ -112,7 +118,12 @@ public class CardServiceImpl implements CardService {
             card.setDueDate(null);
         }
 
-        return enrich(cardRepository.save(card));
+        card.setUpdatedAt(LocalDateTime.now());
+        Card savedCard = cardRepository.save(card);
+
+        trackActivity(member.getUser(), board, card.getList(), savedCard);
+
+        return enrich(savedCard);
     }
 
     // ─── MOVE ─────────────────────────────────────────────────────────────────
@@ -127,7 +138,7 @@ public class CardServiceImpl implements CardService {
 
         // Validate user is a member of the source board
         Boards sourceBoard = card.getList().getBoard();
-        boardMemberRepository
+        BoardMember requester = boardMemberRepository
                 .findByBoardIdAndUserId(sourceBoard.getId(), userId)
                 .orElseThrow(() ->
                         new CollaborationExceptions.ForbiddenException("User is not a member of the board"));
@@ -170,8 +181,13 @@ public class CardServiceImpl implements CardService {
         // Update the card's list reference
         card.setList(targetList);
         card.setPosition(insertAt + 1);
+        card.setUpdatedAt(LocalDateTime.now());
 
-        return enrich(cardRepository.save(card));
+        Card savedCard = cardRepository.save(card);
+
+        trackActivity(requester.getUser(), targetBoard, targetList, savedCard);
+
+        return enrich(savedCard);
     }
 
     // ─── DELETE ───────────────────────────────────────────────────────────────
@@ -206,7 +222,7 @@ public class CardServiceImpl implements CardService {
 
         Long boardId = card.getList().getBoard().getId();
 
-        boardMemberRepository.findByBoardIdAndUserId(boardId, requestingUserId)
+        BoardMember requester = boardMemberRepository.findByBoardIdAndUserId(boardId, requestingUserId)
                 .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("User is not a member of the board"));
 
         boardMemberRepository.findByBoardIdAndUserId(boardId, newAssigneeUserId)
@@ -220,7 +236,12 @@ public class CardServiceImpl implements CardService {
 
         cardAssigneeRepository.save(new CardAssignee(card, newAssignee));
 
-        return enrich(card);
+        card.setUpdatedAt(LocalDateTime.now());
+        Card savedCard = cardRepository.save(card);
+
+        trackActivity(requester.getUser(), card.getList().getBoard(), card.getList(), savedCard);
+
+        return enrich(savedCard);
     }
 
     @Override
@@ -252,6 +273,15 @@ public class CardServiceImpl implements CardService {
         cardLabelRepository.deleteByCardIdAndLabelId(cardId, labelId);
     }
 
+    private void trackActivity(User user, Boards board, ListEntity list, Card card) {
+        UserRecentBoard entry = recentBoardRepository
+                .findByUserBoardListCard(user.getId(), board.getId(), list.getId(), card.getId())
+                .orElseGet(() -> new UserRecentBoard(user, board, list, card));
+
+        entry.setLastAccessedAt(LocalDateTime.now());
+        recentBoardRepository.save(entry);
+    }
+
     private CardResponseDTO enrich(Card card) {
         CardResponseDTO dto = cardMapper.toDto(card);
 
@@ -267,5 +297,10 @@ public class CardServiceImpl implements CardService {
         );
 
         return dto;
+    }
+
+    @Override
+    public List<AssignedCardResponseDTO> getAssignedCards(Long userId) {
+        return cardAssigneeRepository.findAssignedCardsByUserId(userId);
     }
 }

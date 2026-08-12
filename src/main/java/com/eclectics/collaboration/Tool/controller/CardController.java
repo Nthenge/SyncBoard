@@ -1,9 +1,6 @@
 package com.eclectics.collaboration.Tool.controller;
 
-import com.eclectics.collaboration.Tool.dto.CardRequestDTO;
-import com.eclectics.collaboration.Tool.dto.CardMoveRequestDTO;
-import com.eclectics.collaboration.Tool.dto.CardResponseDTO;
-import com.eclectics.collaboration.Tool.dto.CardAssigneeRequestDTO;
+import com.eclectics.collaboration.Tool.dto.*;
 import com.eclectics.collaboration.Tool.security.CustomUserDetails;
 import com.eclectics.collaboration.Tool.service.CardService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -124,5 +121,12 @@ public class CardController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         cardService.detachLabel(cardId, labelId, userDetails.getId());
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Get all cards assigned to the current user across every board")
+    @GetMapping("/assigned-to-me")
+    public ResponseEntity<List<AssignedCardResponseDTO>> getAssignedCards(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(cardService.getAssignedCards(userDetails.getId()));
     }
 }

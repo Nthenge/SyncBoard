@@ -6,10 +6,7 @@ import com.eclectics.collaboration.Tool.enums.BoardRole;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.mapper.BoardsMapper;
 import com.eclectics.collaboration.Tool.model.*;
-import com.eclectics.collaboration.Tool.repository.BoardMemberRepository;
-import com.eclectics.collaboration.Tool.repository.BoardsRepository;
-import com.eclectics.collaboration.Tool.repository.UserRespository;
-import com.eclectics.collaboration.Tool.repository.WorkSpaceReposiroty;
+import com.eclectics.collaboration.Tool.repository.*;
 import com.eclectics.collaboration.Tool.service.BoardsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -18,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -30,6 +29,9 @@ public class BoardsServiceImpl implements BoardsService {
     private final BoardsMapper mapper;
     private final WorkSpaceReposiroty workSpaceReposiroty;
     private final SimpMessagingTemplate messagingTemplate;
+    private final StarredBoardRepository starredBoardRepository;
+    private final StarredWorkspaceRepository starredWorkspaceRepository;
+
 
     // ─── CREATE ───────────────────────────────────────────────────────────────
 
@@ -67,7 +69,13 @@ public class BoardsServiceImpl implements BoardsService {
         Boards board = boardsRepository.findById(boardId)
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Board not found"));
 
-        return mapper.toDto(board);
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRespository.findByEmail(email)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
+
+        BoardsResponseDTO dto = mapper.toDto(board);
+        dto.setStarred(starredBoardRepository.existsByBoard_IdAndUser_Id(board.getId(), currentUser.getId()));
+        return dto;
     }
 
     @Override
@@ -76,19 +84,39 @@ public class BoardsServiceImpl implements BoardsService {
             throw new CollaborationExceptions.ResourceNotFoundException("Workspace not found");
         }
 
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRespository.findByEmail(email)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
+
+        Set<Long> starredIds = starredBoardRepository.findByUser_Id(currentUser.getId()).stream()
+                .map(sb -> sb.getBoard().getId())
+                .collect(Collectors.toSet());
+
         return boardsRepository.findAllByWorkSpaceId_Id(workSpaceId)
                 .stream()
-                .map(mapper::toDto)
+                .map(board -> {
+                    BoardsResponseDTO dto = mapper.toDto(board);
+                    dto.setStarred(starredIds.contains(board.getId()));
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<BoardsResponseDTO> getBoardsForUser(Long userId) {
+        Set<Long> starredIds = starredBoardRepository.findByUser_Id(userId).stream()
+                .map(sb -> sb.getBoard().getId())
+                .collect(Collectors.toSet());
+
         return boardMemberRepository.findAllByUserId(userId)
                 .stream()
                 .map(BoardMember::getBoard)
-                .map(mapper::toDto)
+                .map(board -> {
+                    BoardsResponseDTO dto = mapper.toDto(board);
+                    dto.setStarred(starredIds.contains(board.getId()));
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -116,21 +144,18 @@ public class BoardsServiceImpl implements BoardsService {
             board.setBoardName(dto.getBoardName());
         }
 
-        if (dto.getIsStarred() != null) {
-            board.setStarred(dto.getIsStarred());
-        }
-
         Boards updated = boardsRepository.save(board);
+
+        BoardsResponseDTO dtoo = mapper.toDto(updated);
+        dtoo.setStarred(starredBoardRepository.existsByBoard_IdAndUser_Id(updated.getId(), currentUser.getId()));
 
         messagingTemplate.convertAndSend(
                 "/topic/workspace/" + board.getWorkSpaceId().getId(),
-                mapper.toDto(updated)
+                dto
         );
 
-        return mapper.toDto(updated);
+        return dtoo;
     }
-
-    // ─── DELETE ───────────────────────────────────────────────────────────────
 
     @Override
     public void deleteBoard(Long boardId) {
@@ -153,5 +178,34 @@ public class BoardsServiceImpl implements BoardsService {
         boardsRepository.delete(board);
 
         messagingTemplate.convertAndSend("/topic/workspace/" + workSpaceId + "/delete", boardId);
+    }
+
+    @Transactional
+    @Override
+    public boolean toggleStarBoard(Long boardId, Long userId) {
+        Boards board = boardsRepository.findById(boardId)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Board not found"));
+        User user = userRespository.findById(userId)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
+
+        Optional<StarredBoard> existing = starredBoardRepository.findByBoard_IdAndUser_Id(boardId, userId);
+        if (existing.isPresent()) {
+            starredBoardRepository.delete(existing.get());
+            return false;
+        } else {
+            starredBoardRepository.save(new StarredBoard(board, user));
+            return true;
+        }
+    }
+
+    @Override
+    public List<BoardsResponseDTO> getStarredBoards(Long userId) {
+        return starredBoardRepository.findByUser_Id(userId).stream()
+                .map(sb -> {
+                    BoardsResponseDTO dto = mapper.toDto(sb.getBoard());
+                    dto.setStarred(true);
+                    return dto;
+                })
+                .toList();
     }
 }

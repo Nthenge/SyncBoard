@@ -19,4 +19,9 @@ public interface BoardsService {
     BoardsResponseDTO getBoardById(Long boardId);
 
     List<BoardsResponseDTO> getBoardsByWorkspace(Long workSpaceId);
+
+    @Transactional
+    boolean toggleStarBoard(Long boardId, Long userId);
+
+    List<BoardsResponseDTO> getStarredBoards(Long userId);
 }

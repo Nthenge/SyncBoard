@@ -154,4 +154,31 @@ public class WorkSpaceController {
         List<MyInvitationResponseDTO> invitations = invitationService.getMyInvitations(userDetails.getUser());
         return ResponseHandler.generateResponse("Your pending invitations", HttpStatus.OK, invitations, request.getRequestURI());
     }
+
+    @Operation(summary = "Toggle star on a workspace for the current user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Star toggled successfully"),
+            @ApiResponse(responseCode = "404", description = "Workspace not found")
+    })
+    @PostMapping("/{workspaceId}/star")
+    public ResponseEntity<Object> toggleStarWorkspace(
+            @PathVariable Long workspaceId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        boolean starred = workSpaceService.toggleStarWorkspace(workspaceId, userDetails.getUser().getId());
+        return ResponseHandler.generateResponse(
+                starred ? "Workspace starred" : "Workspace unstarred",
+                HttpStatus.OK,
+                java.util.Map.of("starred", starred),
+                request.getRequestURI()
+        );
+    }
+
+    @Operation(summary = "Get all workspaces starred by the current user")
+    @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Starred workspaces fetched successfully") })
+    @GetMapping("/starred")
+    public ResponseEntity<Object> getStarredWorkspaces(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<WorkSpaceResponseDTO> workspaces = workSpaceService.getStarredWorkspaces(userDetails.getUser().getId());
+        return ResponseHandler.generateResponse("Starred workspaces fetched", HttpStatus.OK, workspaces, request.getRequestURI());
+    }
 }

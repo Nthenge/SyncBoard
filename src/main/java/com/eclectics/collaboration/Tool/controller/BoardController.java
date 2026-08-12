@@ -144,4 +144,31 @@ public class BoardController {
                 request.getRequestURI()
         );
     }
+
+    @Operation(summary = "Toggle star on a board for the current user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Star toggled successfully"),
+            @ApiResponse(responseCode = "404", description = "Board not found")
+    })
+    @PostMapping("/{boardId}/star")
+    public ResponseEntity<Object> toggleStarBoard(
+            @PathVariable Long boardId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        boolean starred = boardService.toggleStarBoard(boardId, userDetails.getId());
+        return ResponseHandler.generateResponse(
+                starred ? "Board starred" : "Board unstarred",
+                HttpStatus.OK,
+                java.util.Map.of("starred", starred),
+                request.getRequestURI()
+        );
+    }
+
+    @Operation(summary = "Get all boards starred by the current user")
+    @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Starred boards fetched successfully") })
+    @GetMapping("/starred")
+    public ResponseEntity<Object> getStarredBoards(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<BoardsResponseDTO> boards = boardService.getStarredBoards(userDetails.getId());
+        return ResponseHandler.generateResponse("Starred boards fetched", HttpStatus.OK, boards, request.getRequestURI());
+    }
 }

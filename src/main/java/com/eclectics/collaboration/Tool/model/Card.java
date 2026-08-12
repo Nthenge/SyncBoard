@@ -43,6 +43,7 @@ public class Card {
 
     private Integer version = 1;
     private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime updatedAt = LocalDateTime.now();
 }
 
 

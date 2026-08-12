@@ -1,5 +1,6 @@
 package com.eclectics.collaboration.Tool.service;
 
+import com.eclectics.collaboration.Tool.dto.AssignedCardResponseDTO;
 import com.eclectics.collaboration.Tool.dto.CardMoveRequestDTO;
 import com.eclectics.collaboration.Tool.dto.CardRequestDTO;
 import com.eclectics.collaboration.Tool.dto.CardResponseDTO;
@@ -24,4 +25,6 @@ public interface CardService {
     CardResponseDTO reassignCard(Long cardId, Long newAssigneeUserId, Long requestingUserId);
     void attachLabel(Long cardId, Long labelId, Long userId);
     void detachLabel(Long cardId, Long labelId, Long userId);
+
+    List<AssignedCardResponseDTO> getAssignedCards(Long userId);
 }

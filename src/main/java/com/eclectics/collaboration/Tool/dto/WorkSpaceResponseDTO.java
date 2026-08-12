@@ -19,5 +19,6 @@ public class WorkSpaceResponseDTO {
     private LocalDateTime workSpaceCreatedAt;
     private LocalDateTime updatedAt;
     private WorkSpaceMemberDTO owner;
+    private boolean isStarred;
     private Set<WorkSpaceMemberDTO> members = new HashSet<>();
 }

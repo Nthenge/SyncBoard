@@ -11,4 +11,5 @@ public class BoardsResponseDTO {
     private String boardCreatedBy;
     private LocalDateTime boardCreatedAt;
     private Long workSpaceId;
+    private boolean isStarred;
 }

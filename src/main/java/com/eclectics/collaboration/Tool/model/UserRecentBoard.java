@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(
         name = "user_recent_boards",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "board_id"})
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "board_id", "list_id", "card_id"})
 )
 public class UserRecentBoard {
 
@@ -28,12 +28,22 @@ public class UserRecentBoard {
     @JoinColumn(name = "board_id", nullable = false)
     private Boards board;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "list_id")
+    private ListEntity list;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "card_id")
+    private Card card;
+
     @Column(name = "last_accessed_at", nullable = false)
     private LocalDateTime lastAccessedAt;
 
-    public UserRecentBoard(User user, Boards board) {
+    public UserRecentBoard(User user, Boards board, ListEntity list, Card card) {
         this.user = user;
         this.board = board;
+        this.list = list;
+        this.card = card;
         this.lastAccessedAt = LocalDateTime.now();
     }
 }

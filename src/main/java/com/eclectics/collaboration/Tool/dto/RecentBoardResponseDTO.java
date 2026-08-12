@@ -7,5 +7,9 @@ public record RecentBoardResponseDTO(
         String name,
         Long workspaceId,
         String workspaceName,
+        Long listId,
+        String listName,
+        Long cardId,
+        String cardTitle,
         LocalDateTime lastAccessedAt
 ) {}

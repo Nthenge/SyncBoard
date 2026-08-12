@@ -29,9 +29,11 @@ public class UserRecentBoardController {
     @PostMapping("/{boardId}")
     public ResponseEntity<Object> trackBoardAccess(
             @RequestHeader("Authorization") String tokenHeader,
-            @PathVariable Long boardId
+            @PathVariable Long boardId,
+            @RequestParam(required = false) Long listId,
+            @RequestParam(required = false) Long cardId
     ) {
-        recentBoardService.trackBoardAccess(tokenHeader, boardId);
-        return ResponseHandler.generateResponse("Board access recorded", HttpStatus.OK, null, "/api/v1/user/recent-boards/" + boardId);
+        recentBoardService.trackActivity(tokenHeader, boardId, listId, cardId);
+        return ResponseHandler.generateResponse("Activity recorded", HttpStatus.OK, null, "/api/v1/user/recent-boards/" + boardId);
     }
 }
