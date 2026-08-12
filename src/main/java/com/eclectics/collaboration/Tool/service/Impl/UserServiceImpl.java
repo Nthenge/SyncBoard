@@ -223,4 +223,25 @@ public class UserServiceImpl implements UserService {
 
         SecurityContextHolder.clearContext();
     }
+
+    @Override
+    public ScratchpadDTO getScratchpad(String token) {
+        String email = jwtUtil.extractEmail(token);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
+        return new ScratchpadDTO(user.getScratchpadContent(), user.getScratchpadUpdatedAt());
+    }
+
+    @Override
+    public ScratchpadDTO updateScratchpad(String token, String content) {
+        String email = jwtUtil.extractEmail(token);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
+
+        user.setScratchpadContent(content);
+        user.setScratchpadUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        return new ScratchpadDTO(user.getScratchpadContent(), user.getScratchpadUpdatedAt());
+    }
 }

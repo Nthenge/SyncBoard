@@ -168,4 +168,33 @@ public class UserController {
         TokenRefreshResponseDTO response = userService.refreshToken(requestDTO.getRefreshToken());
         return ResponseHandler.generateResponse("Token refreshed successfully", HttpStatus.OK, response, request.getRequestURI());
     }
+
+    @Operation(summary = "Get the current user's personal scratchpad notes")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Scratchpad fetched successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @GetMapping("/scratchpad")
+    public ResponseEntity<Object> getScratchpad(
+            @RequestHeader("Authorization") String tokenHeader
+    ) {
+        String token = tokenHeader.replace("Bearer ", "");
+        ScratchpadDTO response = userService.getScratchpad(token);
+        return ResponseHandler.generateResponse("Scratchpad fetched", HttpStatus.OK, response, request.getRequestURI());
+    }
+
+    @Operation(summary = "Save the current user's personal scratchpad notes")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Scratchpad saved successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @PutMapping("/scratchpad")
+    public ResponseEntity<Object> updateScratchpad(
+            @RequestHeader("Authorization") String tokenHeader,
+            @RequestBody ScratchpadDTO requestDTO
+    ) {
+        String token = tokenHeader.replace("Bearer ", "");
+        ScratchpadDTO response = userService.updateScratchpad(token, requestDTO.getContent());
+        return ResponseHandler.generateResponse("Scratchpad saved", HttpStatus.OK, response, request.getRequestURI());
+    }
 }

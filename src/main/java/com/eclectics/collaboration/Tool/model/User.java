@@ -40,6 +40,11 @@ public class User {
     private LocalDateTime createdAt;
     private boolean enabled = false;
 
+    @Column(columnDefinition = "TEXT")
+    private String scratchpadContent;
+
+    private LocalDateTime scratchpadUpdatedAt;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OveralRole role = OveralRole.USER;

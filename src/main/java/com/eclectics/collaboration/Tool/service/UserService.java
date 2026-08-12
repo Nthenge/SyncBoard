@@ -17,4 +17,8 @@ public interface UserService {
     TokenRefreshResponseDTO refreshToken(String requestToken);
 
     void logOutUser(String token);
+
+    ScratchpadDTO getScratchpad(String token);
+
+    ScratchpadDTO updateScratchpad(String token, String content);
 }

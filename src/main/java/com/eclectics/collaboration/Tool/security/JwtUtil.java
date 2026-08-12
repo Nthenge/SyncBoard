@@ -19,7 +19,7 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String SECRET;
 
-    private final long SESSION_EXPIRATION_TIME = 1000 * 60 * 1;
+    private final long SESSION_EXPIRATION_TIME = 1000 * 60 * 15;
     private final long RESET_CONFIRM_TIME = 1000 * 60 * 15;
 
     private Key getSigningKey() {
