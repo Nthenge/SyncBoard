@@ -86,7 +86,12 @@ public class UserServiceImpl implements UserService {
     public UserLoginResponseDTO userLogin(UserLoginRequestDTO loginRequestDTO) {
 
         User user = userRepository.findByEmail(loginRequestDTO.getEmail())
-                .orElseThrow(() -> new CollaborationExceptions.BadRequestException("Invalid email or password"));
+                .orElseThrow(() -> new CollaborationExceptions.BadRequestException(
+                        "Your details aren't in our system, please register"));
+
+        if (!passwordEncoder.matches(loginRequestDTO.getPassword(), user.getPassword())) {
+            throw new CollaborationExceptions.BadRequestException("Invalid email or password");
+        }
 
         if (!passwordEncoder.matches(loginRequestDTO.getPassword(), user.getPassword())) {
             throw new CollaborationExceptions.BadRequestException("Invalid email or password");

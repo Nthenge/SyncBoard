@@ -1,5 +1,6 @@
 package com.eclectics.collaboration.Tool.model;
 
+import com.eclectics.collaboration.Tool.enums.WorkspaceRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,4 +27,8 @@ public class Invitation {
     private String inviteToken;
     private LocalDateTime expiryDate;
     private boolean accepted = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private WorkspaceRole role = WorkspaceRole.MEMBER;
 }

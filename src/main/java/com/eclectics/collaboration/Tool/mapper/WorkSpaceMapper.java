@@ -5,6 +5,7 @@ import com.eclectics.collaboration.Tool.dto.WorkSpaceRequestDTO;
 import com.eclectics.collaboration.Tool.dto.WorkSpaceResponseDTO;
 import com.eclectics.collaboration.Tool.model.User;
 import com.eclectics.collaboration.Tool.model.WorkSpace;
+import com.eclectics.collaboration.Tool.model.WorkSpaceMember;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -30,20 +31,25 @@ public interface WorkSpaceMapper {
                 .workSpaceDescription(ws.getWorkSpaceDescription())
                 .workSpaceCreatedAt(ws.getWorkSpaceCreatedAt())
                 .updatedAt(ws.getUpdatedAt())
-                .owner(toMemberDTO(ws.getWorkSpaceOwnerId()))
+                .owner(toMemberDTO(ws.getWorkSpaceOwnerId(), com.eclectics.collaboration.Tool.enums.WorkspaceRole.ADMIN))
                 .members(ws.getMembers().stream()
                         .map(this::toMemberDTO)
                         .collect(Collectors.toSet()))
                 .build();
     }
 
-    default WorkSpaceMemberDTO toMemberDTO(User user) {
+    default WorkSpaceMemberDTO toMemberDTO(User user, com.eclectics.collaboration.Tool.enums.WorkspaceRole role) {
         return WorkSpaceMemberDTO.builder()
                 .id(user.getId())
                 .firstName(user.getFirstName())
                 .sirName(user.getSirName())
                 .email(user.getEmail())
                 .avatarUrl(user.getAvatarUrl())
+                .role(role)
                 .build();
+    }
+
+    default WorkSpaceMemberDTO toMemberDTO(WorkSpaceMember member) {
+        return toMemberDTO(member.getUser(), member.getRole());
     }
 }

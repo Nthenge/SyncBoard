@@ -1,9 +1,7 @@
 package com.eclectics.collaboration.Tool.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.eclectics.collaboration.Tool.enums.WorkspaceRole;
+import lombok.*;
 
 @Data
 @NoArgsConstructor
@@ -15,4 +13,5 @@ public class WorkSpaceMemberDTO {
     private String sirName;
     private String email;
     private String avatarUrl;
+    private WorkspaceRole role;
 }

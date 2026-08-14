@@ -47,4 +47,5 @@ public interface UserRecentBoardRepository extends JpaRepository<UserRecentBoard
         ORDER BY urb.lastAccessedAt DESC
     """)
     List<RecentBoardResponseDTO> findRecentByUserId(@Param("userId") Long userId, Pageable pageable);
+    void deleteByCardId(Long cardId);
 }

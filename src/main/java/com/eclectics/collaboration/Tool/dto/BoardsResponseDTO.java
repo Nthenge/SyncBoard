@@ -1,5 +1,6 @@
 package com.eclectics.collaboration.Tool.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -11,5 +12,6 @@ public class BoardsResponseDTO {
     private String boardCreatedBy;
     private LocalDateTime boardCreatedAt;
     private Long workSpaceId;
+    @JsonProperty("isStarred")
     private boolean isStarred;
 }

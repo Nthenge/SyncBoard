@@ -18,8 +18,8 @@ public interface CardMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "title", ignore = true)
     @Mapping(target = "position", ignore = true)
+    @Mapping(target = "title", source = "dto.title")
     @Mapping(target = "list", source = "list")
     @Mapping(target = "createdBy", source = "user")
     Card toEntity(CardRequestDTO dto, ListEntity list, User user);

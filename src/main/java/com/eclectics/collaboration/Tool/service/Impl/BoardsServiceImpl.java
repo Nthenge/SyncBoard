@@ -47,8 +47,11 @@ public class BoardsServiceImpl implements BoardsService {
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException(
                         "Workspace not found with ID: " + workSpaceId));
 
-        if (!workSpace.getMembers().contains(currentUser)
-                && !workSpace.getWorkSpaceOwnerId().equals(currentUser)) {
+        boolean isOwner = workSpace.getWorkSpaceOwnerId().getId().equals(currentUser.getId());
+        boolean isMember = workSpace.getMembers().stream()
+                .anyMatch(m -> m.getUser().getId().equals(currentUser.getId()));
+
+        if (!isOwner && !isMember) {
             throw new CollaborationExceptions.ForbiddenException("You are not a member of this workspace");
         }
 

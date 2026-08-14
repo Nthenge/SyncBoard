@@ -76,7 +76,10 @@ public class WorkSpaceController {
 
         emailService.inviteUsers(userDetails.getUser(), inviteRequest, workspaceId);
 
-        String message = "Invitations sent successfully to: " + String.join(", ", inviteRequest.getEmail());
+        List<String> emails = inviteRequest.getInvitations().stream()
+                .map(InviteRequestDTO.InviteeDTO::getEmail)
+                .toList();
+        String message = "Invitations sent successfully to: " + String.join(", ", emails);
         return ResponseHandler.generateResponse(message, HttpStatus.OK, null, request.getRequestURI());
     }
 
@@ -180,5 +183,33 @@ public class WorkSpaceController {
     public ResponseEntity<Object> getStarredWorkspaces(@AuthenticationPrincipal CustomUserDetails userDetails) {
         List<WorkSpaceResponseDTO> workspaces = workSpaceService.getStarredWorkspaces(userDetails.getUser().getId());
         return ResponseHandler.generateResponse("Starred workspaces fetched", HttpStatus.OK, workspaces, request.getRequestURI());
+    }
+
+    @Operation(summary = "Leave a workspace: owner leaving deletes the workspace; member leaving just removes their membership")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Left workspace successfully"),
+            @ApiResponse(responseCode = "403", description = "Not a member of this workspace"),
+            @ApiResponse(responseCode = "404", description = "Workspace not found")
+    })
+    @PostMapping("/{workspaceId}/leave")
+    public ResponseEntity<Object> leaveWorkspace(
+            @PathVariable Long workspaceId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        workSpaceService.leaveWorkspace(workspaceId, userDetails.getUser());
+        return ResponseHandler.generateResponse("Left workspace successfully", HttpStatus.OK, null, request.getRequestURI());
+    }
+    @Operation(summary = "Update a workspace's name and/or description")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Workspace updated successfully"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - user is not the workspace owner"),
+            @ApiResponse(responseCode = "404", description = "Workspace not found")
+    })
+    @PutMapping("/{workspaceId}")
+    public ResponseEntity<Object> updateWorkspace(
+            @PathVariable Long workspaceId,
+            @RequestBody WorkSpaceRequestDTO requestDTO,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        WorkSpaceResponseDTO response = workSpaceService.updateWorkspace(workspaceId, userDetails.getUser(), requestDTO);
+        return ResponseHandler.generateResponse("Workspace updated successfully", HttpStatus.OK, response, request.getRequestURI());
     }
 }

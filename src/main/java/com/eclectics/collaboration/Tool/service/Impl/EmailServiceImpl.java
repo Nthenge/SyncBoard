@@ -1,12 +1,14 @@
 package com.eclectics.collaboration.Tool.service.Impl;
 
 import com.eclectics.collaboration.Tool.dto.InviteRequestDTO;
+import com.eclectics.collaboration.Tool.enums.WorkspaceRole;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.enums.ConfigKey;
 import com.eclectics.collaboration.Tool.model.Invitation;
 import com.eclectics.collaboration.Tool.model.User;
 import com.eclectics.collaboration.Tool.model.WorkSpace;
 import com.eclectics.collaboration.Tool.repository.InvitationRepository;
+import com.eclectics.collaboration.Tool.repository.WorkSpaceMemberRepository;
 import com.eclectics.collaboration.Tool.repository.WorkSpaceReposiroty;
 import com.eclectics.collaboration.Tool.service.EmailService;
 import com.eclectics.collaboration.Tool.service.SystemConfigService;
@@ -35,6 +37,7 @@ public class EmailServiceImpl implements EmailService {
     private final WorkSpaceReposiroty workspaceRepository;
     private final InvitationRepository invitationRepository;
     private final SystemConfigService systemConfigService;
+    private final WorkSpaceMemberRepository workSpaceMemberRepository;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
@@ -103,22 +106,28 @@ public class EmailServiceImpl implements EmailService {
         WorkSpace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Workspace not found"));
 
-        if (!workspace.getWorkSpaceOwnerId().getId().equals(owner.getId())) {
-            throw new CollaborationExceptions.UnauthorizedException("Only the owner can invite others");
+        boolean isOwner = workspace.getWorkSpaceOwnerId().getId().equals(owner.getId());
+        boolean isAdminMember = workSpaceMemberRepository
+                .findByWorkspace_IdAndUser_Id(workspaceId, owner.getId())
+                .map(m -> m.getRole() == WorkspaceRole.ADMIN)
+                .orElse(false);
+
+        if (!isOwner && !isAdminMember) {
+            throw new CollaborationExceptions.UnauthorizedException("Only the workspace owner or an admin can invite others");
         }
 
-        for (String email : inviteDto.getEmail()) {
+        for (InviteRequestDTO.InviteeDTO invitee : inviteDto.getInvitations()) {
             String token = UUID.randomUUID().toString();
 
             Invitation invite = new Invitation();
-            invite.setEmail(email);
+            invite.setEmail(invitee.getEmail());
             invite.setWorkspace(workspace);
             invite.setInviteToken(token);
             invite.setExpiryDate(LocalDateTime.now().plusDays(7));
+            invite.setRole(invitee.getRole() != null ? invitee.getRole() : WorkspaceRole.MEMBER);
 
             invitationRepository.save(invite);
-
-            sendInvitationEmail(email, token, workspace.getWorkSpaceName());
+            sendInvitationEmail(invitee.getEmail(), token, workspace.getWorkSpaceName());
         }
     }
 

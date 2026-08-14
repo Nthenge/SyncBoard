@@ -2,12 +2,15 @@ package com.eclectics.collaboration.Tool.service.Impl;
 
 import com.eclectics.collaboration.Tool.dto.InvitationResponseDTO;
 import com.eclectics.collaboration.Tool.dto.MyInvitationResponseDTO;
+import com.eclectics.collaboration.Tool.enums.WorkspaceRole;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.model.Invitation;
 import com.eclectics.collaboration.Tool.model.User;
 import com.eclectics.collaboration.Tool.model.WorkSpace;
+import com.eclectics.collaboration.Tool.model.WorkSpaceMember;
 import com.eclectics.collaboration.Tool.repository.InvitationRepository;
 import com.eclectics.collaboration.Tool.repository.UserRespository;
+import com.eclectics.collaboration.Tool.repository.WorkSpaceMemberRepository;
 import com.eclectics.collaboration.Tool.repository.WorkSpaceReposiroty;
 import com.eclectics.collaboration.Tool.service.EmailService;
 import com.eclectics.collaboration.Tool.service.InvitationService;
@@ -26,6 +29,7 @@ public class InvitationServiceImpl implements InvitationService {
     private final WorkSpaceReposiroty workSpaceRepository;
     private final EmailService emailService;
     private final UserRespository userRepository;
+    private final WorkSpaceMemberRepository workSpaceMemberRepository;
 
     @Transactional
     @Override
@@ -48,9 +52,15 @@ public class InvitationServiceImpl implements InvitationService {
         WorkSpace ws = workSpaceRepository.findById(invite.getWorkspace().getId())
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Workspace not found."));
 
-        ws.getMembers().add(managedInvitee);
+        boolean alreadyMember = workSpaceMemberRepository.existsByWorkspace_IdAndUser_Id(ws.getId(), managedInvitee.getId());
+        if (!alreadyMember) {
+            WorkSpaceMember member = new WorkSpaceMember();
+            member.setWorkspace(ws);
+            member.setUser(managedInvitee);
+            member.setRole(invite.getRole() != null ? invite.getRole() : WorkspaceRole.MEMBER);
+            workSpaceMemberRepository.save(member);
+        }
 
-        workSpaceRepository.save(ws);
         invitationRepository.delete(invite);
     }
 

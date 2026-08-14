@@ -11,4 +11,5 @@ public interface CardLabelRepository extends JpaRepository<CardLabel, Long> {
     Optional<CardLabel> findByCardIdAndLabelId(Long cardId, Long labelId);
     boolean existsByCardIdAndLabelId(Long cardId, Long labelId);
     void deleteByCardIdAndLabelId(Long cardId, Long labelId);
+    void deleteByCardId(Long cardId);
 }

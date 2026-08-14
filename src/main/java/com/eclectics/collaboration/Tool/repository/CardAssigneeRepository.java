@@ -3,6 +3,7 @@ package com.eclectics.collaboration.Tool.repository;
 import com.eclectics.collaboration.Tool.dto.AssignedCardResponseDTO;
 import com.eclectics.collaboration.Tool.model.CardAssignee;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -43,6 +44,14 @@ public interface CardAssigneeRepository extends JpaRepository<CardAssignee, Long
         ORDER BY c.updatedAt DESC
     """)
     List<AssignedCardResponseDTO> findAssignedCardsByUserId(@Param("userId") Long userId);
+
+    @Modifying
+    @Query("DELETE FROM CardAssignee ca WHERE ca.card.list.board.id = :boardId")
+    void deleteByBoardId(@Param("boardId") Long boardId);
+
+    @Modifying
+    @Query("DELETE FROM CardAssignee ca WHERE ca.user.id = :userId AND ca.card.list.board.workSpaceId.id = :workspaceId")
+    void deleteByUserIdAndWorkspaceId(@Param("userId") Long userId, @Param("workspaceId") Long workspaceId);
 }
 
 

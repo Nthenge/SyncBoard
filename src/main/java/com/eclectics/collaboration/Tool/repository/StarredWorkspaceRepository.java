@@ -11,4 +11,5 @@ public interface StarredWorkspaceRepository extends JpaRepository<StarredWorkspa
     Optional<StarredWorkspace> findByWorkspace_IdAndUser_Id(Long workspaceId, Long userId);
     List<StarredWorkspace> findByUser_Id(Long userId);
     void deleteByWorkspace_IdAndUser_Id(Long workspaceId, Long userId);
+    void deleteByWorkspace_Id(Long workspaceId);
 }

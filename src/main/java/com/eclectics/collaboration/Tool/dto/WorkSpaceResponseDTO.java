@@ -1,6 +1,7 @@
 package com.eclectics.collaboration.Tool.dto;
 
 import com.eclectics.collaboration.Tool.model.User;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ public class WorkSpaceResponseDTO {
     private LocalDateTime workSpaceCreatedAt;
     private LocalDateTime updatedAt;
     private WorkSpaceMemberDTO owner;
+    @JsonProperty("isStarred")
     private boolean isStarred;
     private Set<WorkSpaceMemberDTO> members = new HashSet<>();
 }

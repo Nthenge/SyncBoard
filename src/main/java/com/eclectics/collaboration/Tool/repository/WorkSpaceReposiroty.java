@@ -11,6 +11,6 @@ import java.util.List;
 public interface WorkSpaceReposiroty extends JpaRepository<WorkSpace, Long> {
     List<WorkSpace> findAllByWorkSpaceOwnerId(User user);
     @Query("SELECT DISTINCT w FROM WorkSpace w LEFT JOIN w.members m " +
-            "WHERE w.workSpaceOwnerId = :user OR m = :user")
+            "WHERE w.workSpaceOwnerId = :user OR m.user = :user")
     List<WorkSpace> findAllByOwnerOrMember(@Param("user") User user);
 }

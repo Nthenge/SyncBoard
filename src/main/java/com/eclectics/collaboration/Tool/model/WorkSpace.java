@@ -42,14 +42,9 @@ public class WorkSpace {
     @JsonIgnore
     private User workSpaceOwnerId;
 
-    @ManyToMany
-    @JoinTable(
-            name = "workspace_members",
-            joinColumns = @JoinColumn(name = "workspace_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    @JsonIgnore                                       // was missing — causes infinite recursion
-    private Set<User> members = new HashSet<>();
+    @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<WorkSpaceMember> members = new HashSet<>();
 
     @PrePersist
     protected void onCreate() {

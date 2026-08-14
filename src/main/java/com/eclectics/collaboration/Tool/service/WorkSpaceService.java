@@ -20,4 +20,10 @@ public interface WorkSpaceService {
     boolean toggleStarWorkspace(Long workspaceId, Long userId);
 
     List<WorkSpaceResponseDTO> getStarredWorkspaces(Long userId);
+
+    @Transactional
+    void leaveWorkspace(Long workspaceId, User user);
+
+    @Transactional
+    WorkSpaceResponseDTO updateWorkspace(Long workspaceId, User user, WorkSpaceRequestDTO request);
 }

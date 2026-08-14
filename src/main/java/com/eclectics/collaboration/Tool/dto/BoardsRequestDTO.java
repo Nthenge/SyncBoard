@@ -13,7 +13,6 @@ public class BoardsRequestDTO {
 
     private String boardName;
     private String boardDescription;
-//    private Long workspaceId;
     private Boolean isStarred;
 
 }

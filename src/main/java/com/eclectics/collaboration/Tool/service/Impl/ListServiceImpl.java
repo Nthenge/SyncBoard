@@ -27,8 +27,8 @@ public class ListServiceImpl implements ListService {
     private final ListMapper listMapper;
     private final BoardMemberRepository boardMemberRepository;
     private final CardAssigneeRepository cardAssigneeRepository;
-
-    // ─── CREATE ───────────────────────────────────────────────────────────────
+    private final CardLabelRepository cardLabelRepository;
+    private final UserRecentBoardRepository recentBoardRepository;
 
     @Override
     @Transactional
@@ -57,8 +57,6 @@ public class ListServiceImpl implements ListService {
         return listMapper.toDto(listRepository.save(list));
     }
 
-    // ─── READ ─────────────────────────────────────────────────────────────────
-
     @Override
     public List<ListResponseDTO> getListsByBoard(Long boardId) {
         return listRepository.findByBoard_IdOrderByPosition(boardId)
@@ -66,8 +64,6 @@ public class ListServiceImpl implements ListService {
                 .map(listMapper::toDto)
                 .toList();
     }
-
-    // ─── UPDATE ───────────────────────────────────────────────────────────────
 
     @Transactional
     @Override
@@ -89,8 +85,6 @@ public class ListServiceImpl implements ListService {
         return listMapper.toDto(listRepository.save(list));
     }
 
-    // ─── DELETE ───────────────────────────────────────────────────────────────
-
     @Transactional
     @Override
     public void deleteList(Long listId, Long userId) {
@@ -108,13 +102,13 @@ public class ListServiceImpl implements ListService {
         }
 
         list.getCards().forEach(card -> {
-            cardAssigneeRepository.deleteByCardId(card.getId()); // ← delete children first
+            cardAssigneeRepository.deleteByCardId(card.getId());
+            cardLabelRepository.deleteByCardId(card.getId());
+            recentBoardRepository.deleteByCardId(card.getId());
             cardRepository.delete(card);
         });
         listRepository.delete(list);
     }
-    // ─── REORDER ──────────────────────────────────────────────────────────────
-
     @Transactional
     @Override
     public List<ListResponseDTO> reorderLists(Long boardId, List<Long> listIds, Long userId) {
@@ -128,13 +122,10 @@ public class ListServiceImpl implements ListService {
         if (member.getRole() != BoardRole.ADMIN) {
             throw new CollaborationExceptions.UnauthorizedException("Only admins can reorder lists");
         }
-
-        // Fetch all lists for this board in one query and index by id
         Map<Long, ListEntity> listMap = listRepository.findByBoard_IdOrderByPosition(boardId)
                 .stream()
                 .collect(Collectors.toMap(ListEntity::getId, l -> l));
 
-        // Validate every id in the request actually belongs to this board
         for (Long id : listIds) {
             if (!listMap.containsKey(id)) {
                 throw new CollaborationExceptions.BadRequestException(
@@ -142,7 +133,6 @@ public class ListServiceImpl implements ListService {
             }
         }
 
-        // Assign new positions based on the order of listIds (1-based)
         List<ListEntity> toSave = new ArrayList<>();
         for (int i = 0; i < listIds.size(); i++) {
             ListEntity list = listMap.get(listIds.get(i));

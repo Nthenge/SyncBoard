@@ -4,12 +4,8 @@ import com.eclectics.collaboration.Tool.dto.WorkSpaceRequestDTO;
 import com.eclectics.collaboration.Tool.dto.WorkSpaceResponseDTO;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.mapper.WorkSpaceMapper;
-import com.eclectics.collaboration.Tool.model.StarredWorkspace;
-import com.eclectics.collaboration.Tool.model.User;
-import com.eclectics.collaboration.Tool.model.WorkSpace;
-import com.eclectics.collaboration.Tool.repository.StarredWorkspaceRepository;
-import com.eclectics.collaboration.Tool.repository.UserRespository;
-import com.eclectics.collaboration.Tool.repository.WorkSpaceReposiroty;
+import com.eclectics.collaboration.Tool.model.*;
+import com.eclectics.collaboration.Tool.repository.*;
 import com.eclectics.collaboration.Tool.service.WorkSpaceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +28,12 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
     private final WorkSpaceMapper workSpaceMapper;
     private final UserRespository userRespository;
     private final StarredWorkspaceRepository starredWorkspaceRepository;
+    private final CardAssigneeRepository cardAssigneeRepository;
+    private final BoardsRepository boardsRepository;
+    private final BoardMemberRepository boardMemberRepository;
+    private final StarredBoardRepository starredBoardRepository;
+    private final ListEntityRepository listEntityRepository;
+    private final WorkSpaceMemberRepository workSpaceMemberRepository;
 
     @Override
     public WorkSpaceResponseDTO createWorkspace(User user, WorkSpaceRequestDTO request) {
@@ -104,5 +106,72 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
                     return dto;
                 })
                 .toList();
+    }
+
+    @Transactional
+    @Override
+    public void leaveWorkspace(Long workspaceId, User user) {
+        WorkSpace ws = workSpaceReposiroty.findById(workspaceId)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Workspace not found"));
+
+        boolean isOwner = ws.getWorkSpaceOwnerId().getId().equals(user.getId());
+
+        if (isOwner) {
+            deleteWorkspaceCascade(ws);
+        } else {
+            boolean isMember = workSpaceMemberRepository.existsByWorkspace_IdAndUser_Id(workspaceId, user.getId());
+            if (!isMember) {
+                throw new CollaborationExceptions.ForbiddenException("You are not a member of this workspace");
+            }
+            removeMemberFromWorkspace(ws, user);
+        }
+    }
+
+    private void removeMemberFromWorkspace(WorkSpace ws, User user) {
+        Long workspaceId = ws.getId();
+        Long userId = user.getId();
+        cardAssigneeRepository.deleteByUserIdAndWorkspaceId(userId, workspaceId);
+        boardMemberRepository.deleteByUserIdAndWorkspaceId(userId, workspaceId);
+        starredWorkspaceRepository.findByWorkspace_IdAndUser_Id(workspaceId, userId)
+                .ifPresent(starredWorkspaceRepository::delete);
+        starredBoardRepository.deleteByUserIdAndWorkspaceId(userId, workspaceId);
+        workSpaceMemberRepository.deleteByWorkspace_IdAndUser_Id(workspaceId, userId);
+    }
+
+    private void deleteWorkspaceCascade(WorkSpace ws) {
+        Long workspaceId = ws.getId();
+        List<Boards> boards = boardsRepository.findAllByWorkSpaceId_Id(workspaceId);
+
+        for (Boards board : boards) {
+            Long boardId = board.getId();
+            cardAssigneeRepository.deleteByBoardId(boardId);
+            List<ListEntity> lists = listEntityRepository.findByBoard_IdOrderByPosition(boardId);
+            listEntityRepository.deleteAll(lists);
+            boardMemberRepository.deleteByBoardId(boardId);
+            starredBoardRepository.deleteByBoard_Id(boardId);
+            boardsRepository.delete(board);
+        }
+        starredWorkspaceRepository.deleteByWorkspace_Id(workspaceId);
+        workSpaceReposiroty.delete(ws);
+    }
+
+    @Transactional
+    @Override
+    public WorkSpaceResponseDTO updateWorkspace(Long workspaceId, User user, WorkSpaceRequestDTO request) {
+        WorkSpace ws = workSpaceReposiroty.findById(workspaceId)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Workspace not found"));
+
+        if (!ws.getWorkSpaceOwnerId().getId().equals(user.getId())) {
+            throw new CollaborationExceptions.ForbiddenException("You do not have permission to edit this workspace");
+        }
+
+        if (request.getWorkSpaceName() != null && !request.getWorkSpaceName().isBlank()) {
+            ws.setWorkSpaceName(request.getWorkSpaceName());
+        }
+        ws.setWorkSpaceDescription(request.getWorkSpaceDescription());
+
+        WorkSpace saved = workSpaceReposiroty.save(ws);
+        log.info("Workspace updated id={} by user={}", saved.getId(), user.getEmail());
+        return workSpaceMapper.toDto(saved);
     }
 }

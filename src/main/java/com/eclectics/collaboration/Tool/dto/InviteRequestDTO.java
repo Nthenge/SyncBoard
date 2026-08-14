@@ -1,12 +1,11 @@
 package com.eclectics.collaboration.Tool.dto;
 
+import com.eclectics.collaboration.Tool.enums.WorkspaceRole;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
+import lombok.*;
 import java.util.List;
 
 @Getter
@@ -16,7 +15,17 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class InviteRequestDTO {
 
-    @NotEmpty(message = "Email list cannot be empty")
-    private List<String> email;
+    @NotEmpty(message = "Invitations list cannot be empty")
+    @Valid
+    private List<InviteeDTO> invitations;
 
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class InviteeDTO {
+        @NotBlank(message = "Email is required")
+        private String email;
+        private WorkspaceRole role = WorkspaceRole.MEMBER;
+    }
 }
