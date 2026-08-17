@@ -43,6 +43,8 @@ public class OSSService {
 
     public String uploadFile(String objectName, InputStream inputStream) {
         ossClient.putObject(bucketName, objectName, inputStream);
+        ossClient.setObjectAcl(bucketName, objectName, com.aliyun.oss.model.CannedAccessControlList.PublicRead);
+
         String fileUrl = "https://" + bucketName + "." + endpoint.replace("https://", "") + "/" + objectName;
 
         uploadCache.put(objectName, fileUrl);

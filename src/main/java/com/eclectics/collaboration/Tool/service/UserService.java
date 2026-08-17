@@ -21,4 +21,6 @@ public interface UserService {
     ScratchpadDTO getScratchpad(String token);
 
     ScratchpadDTO updateScratchpad(String token, String content);
+
+    AvatarUploadResponseDTO uploadAvatar(String token, MultipartFile avatar) throws IOException;
 }

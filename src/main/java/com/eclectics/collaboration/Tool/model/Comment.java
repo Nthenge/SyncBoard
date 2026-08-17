@@ -1,5 +1,6 @@
 package com.eclectics.collaboration.Tool.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,10 +9,10 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Getter
 @Setter
-@AllArgsConstructor
+@Getter
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "comments")
 public class Comment {
@@ -22,18 +23,16 @@ public class Comment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "card_id", nullable = false)
+    @JsonIgnore
     private Card card;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "author_id", nullable = false)
+    @JsonIgnore
+    private User author;
 
-    @Column(nullable = false, length = 2000)
+    @Column(columnDefinition = "TEXT")
     private String content;
 
-    private LocalDateTime createdAt;
-
-    public Comment(Card card, User user, String content) {
-    }
+    private LocalDateTime createdAt = LocalDateTime.now();
 }
-

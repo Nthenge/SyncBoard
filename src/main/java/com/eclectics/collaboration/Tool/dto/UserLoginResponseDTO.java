@@ -8,6 +8,8 @@ public class UserLoginResponseDTO {
     private String token;
     private String refreshToken;
     private String firstName;
+    private String sirName;
+    private String avatarUrl;
     private OveralRole role;
 
     public UserLoginResponseDTO() {
@@ -18,6 +20,17 @@ public class UserLoginResponseDTO {
         this.email = email;
         this.token = token;
         this.firstName = firstName;
+        this.refreshToken = refreshToken;
+        this.role = role;
+    }
+
+    public UserLoginResponseDTO(Long id, String email, String token, String firstName, String sirName, String avatarUrl, String refreshToken, OveralRole role) {
+        this.id = id;
+        this.email = email;
+        this.token = token;
+        this.firstName = firstName;
+        this.sirName = sirName;
+        this.avatarUrl = avatarUrl;
         this.refreshToken = refreshToken;
         this.role = role;
     }
@@ -52,6 +65,22 @@ public class UserLoginResponseDTO {
 
     public void setFirstName(String firstName) {
         this.firstName = firstName;
+    }
+
+    public String getSirName() {
+        return sirName;
+    }
+
+    public void setSirName(String sirName) {
+        this.sirName = sirName;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
     public String getRefreshToken() {

@@ -52,6 +52,8 @@ public interface CardAssigneeRepository extends JpaRepository<CardAssignee, Long
     @Modifying
     @Query("DELETE FROM CardAssignee ca WHERE ca.user.id = :userId AND ca.card.list.board.workSpaceId.id = :workspaceId")
     void deleteByUserIdAndWorkspaceId(@Param("userId") Long userId, @Param("workspaceId") Long workspaceId);
+
+    List<CardAssignee> findByUserId(Long userId);
 }
 
 

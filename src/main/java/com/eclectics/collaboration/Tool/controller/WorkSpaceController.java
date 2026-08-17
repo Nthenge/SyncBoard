@@ -212,4 +212,17 @@ public class WorkSpaceController {
         WorkSpaceResponseDTO response = workSpaceService.updateWorkspace(workspaceId, userDetails.getUser(), requestDTO);
         return ResponseHandler.generateResponse("Workspace updated successfully", HttpStatus.OK, response, request.getRequestURI());
     }
+
+    @Operation(summary = "Get a single workspace by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Workspace fetched successfully"),
+            @ApiResponse(responseCode = "404", description = "Workspace not found")
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<Object> getWorkspaceById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        WorkSpaceResponseDTO response = workSpaceService.getWorkspaceById(id, userDetails.getUser());
+        return ResponseHandler.generateResponse("Workspace fetched", HttpStatus.OK, response, request.getRequestURI());
+    }
 }

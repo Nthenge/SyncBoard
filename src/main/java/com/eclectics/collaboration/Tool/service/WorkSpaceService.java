@@ -26,4 +26,6 @@ public interface WorkSpaceService {
 
     @Transactional
     WorkSpaceResponseDTO updateWorkspace(Long workspaceId, User user, WorkSpaceRequestDTO request);
+
+    WorkSpaceResponseDTO getWorkspaceById(Long id, User user);
 }

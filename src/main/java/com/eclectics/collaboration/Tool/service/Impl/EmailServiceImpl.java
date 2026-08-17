@@ -23,6 +23,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,6 +98,25 @@ public class EmailServiceImpl implements EmailService {
                 <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
             </div>
             """.formatted(resetLink);
+        sendEmail(to, subject, text);
+    }
+
+    @Override
+    public void sendMentionNotification(String to, String mentionerName, String cardTitle, String commentSnippet) {
+        String subject = "SYNCBOARD — You were mentioned in a comment";
+        String text = """
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
+            <h2 style="color: #4F46E5;">You were mentioned</h2>
+            <p>Hello,</p>
+            <p><strong>%s</strong> mentioned you in a comment on the card <strong>%s</strong>:</p>
+            <div style="background:#f3f4f6; border-left: 3px solid #4F46E5; padding: 12px 16px; margin: 16px 0; color:#334155;">
+                %s
+            </div>
+            <p style="color: #888; font-size: 13px;">Log in to SyncBoard to view and reply.</p>
+            <br/>
+            <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+        </div>
+        """.formatted(mentionerName, cardTitle, commentSnippet);
         sendEmail(to, subject, text);
     }
 
@@ -259,5 +279,92 @@ public class EmailServiceImpl implements EmailService {
             log.error("Email sending failed to: {} — reason: {}", to, e.getMessage(), e);
             throw new RuntimeException("Failed to send email to: " + to, e);
         }
+    }
+
+    @Override
+    public void sendCardAssignedNotification(String to, String assignerName, String cardTitle) {
+        String subject = "SYNCBOARD — You were assigned a card";
+        String text = """
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
+            <h2 style="color: #4F46E5;">You were assigned a card</h2>
+            <p>Hello,</p>
+            <p><strong>%s</strong> assigned you to the card <strong>%s</strong>.</p>
+            <p style="color: #888; font-size: 13px;">Log in to SyncBoard to view the card.</p>
+            <br/>
+            <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+        </div>
+        """.formatted(assignerName, cardTitle);
+        sendEmail(to, subject, text);
+    }
+
+    @Override
+    public void sendBoardAddedNotification(String to, String adderName, String boardName) {
+        String subject = "SYNCBOARD — You were added to a board";
+        String text = """
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
+            <h2 style="color: #4F46E5;">You were added to a board</h2>
+            <p>Hello,</p>
+            <p><strong>%s</strong> added you to the board <strong>%s</strong>.</p>
+            <p style="color: #888; font-size: 13px;">Log in to SyncBoard to view the board.</p>
+            <br/>
+            <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+        </div>
+        """.formatted(adderName, boardName);
+        sendEmail(to, subject, text);
+    }
+
+    @Override
+    public void sendDueSoonNotification(String to, String cardTitle, LocalDateTime dueDate) {
+        String subject = "SYNCBOARD — Card due soon";
+        String formattedDueDate = dueDate.format(DateTimeFormatter.ofPattern("MMM d, yyyy 'at' h:mm a"));
+        String text = """
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
+            <h2 style="color: #4F46E5;">Card due soon</h2>
+            <p>Hello,</p>
+            <p>Your card <strong>%s</strong> is due on <strong>%s</strong>.</p>
+            <p style="color: #888; font-size: 13px;">Log in to SyncBoard to view the card.</p>
+            <br/>
+            <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+        </div>
+        """.formatted(cardTitle, formattedDueDate);
+        sendEmail(to, subject, text);
+    }
+
+    @Override
+    public void sendWeeklyDigest(String to, String userName, List<String> assignedCardTitles, List<String> mentionSummaries) {
+        String subject = "SYNCBOARD — Your weekly digest";
+
+        StringBuilder cardsHtml = new StringBuilder();
+        if (!assignedCardTitles.isEmpty()) {
+            cardsHtml.append("<h3 style=\"color:#334155;\">Cards assigned to you</h3><ul>");
+            for (String title : assignedCardTitles) {
+                cardsHtml.append("<li>").append(title).append("</li>");
+            }
+            cardsHtml.append("</ul>");
+        }
+
+        StringBuilder mentionsHtml = new StringBuilder();
+        if (!mentionSummaries.isEmpty()) {
+            mentionsHtml.append("<h3 style=\"color:#334155;\">Mentions this week</h3><ul>");
+            for (String summary : mentionSummaries) {
+                mentionsHtml.append("<li>").append(summary).append("</li>");
+            }
+            mentionsHtml.append("</ul>");
+        }
+
+        String text = """
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
+            <h2 style="color: #4F46E5;">Your weekly digest</h2>
+            <p>Hello %s,</p>
+            <p>Here's what happened on SyncBoard this week:</p>
+            %s
+            %s
+            <p style="color: #888; font-size: 13px;">Log in to SyncBoard to view details.</p>
+            <br/>
+            <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+        </div>
+        """.formatted(userName, cardsHtml, mentionsHtml);
+
+        sendEmail(to, subject, text);
     }
 }

@@ -48,4 +48,5 @@ public interface UserRecentBoardRepository extends JpaRepository<UserRecentBoard
     """)
     List<RecentBoardResponseDTO> findRecentByUserId(@Param("userId") Long userId, Pageable pageable);
     void deleteByCardId(Long cardId);
+    void deleteByBoard_Id(Long boardId);
 }

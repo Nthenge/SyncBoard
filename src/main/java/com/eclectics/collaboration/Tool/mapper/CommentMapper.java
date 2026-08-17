@@ -8,7 +8,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface CommentMapper {
 
-    @Mapping(target = "authorName", expression = "java(comment.getUser().getFullName())")
+    @Mapping(target = "authorName", expression = "java(comment.getAuthor().getFullName())")
     CommentResponseDTO toDto(Comment comment);
 }
 

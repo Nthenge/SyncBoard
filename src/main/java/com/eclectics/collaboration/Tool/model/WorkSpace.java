@@ -46,6 +46,10 @@ public class WorkSpace {
     @JsonIgnore
     private Set<WorkSpaceMember> members = new HashSet<>();
 
+    @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<Invitation> invitations = new HashSet<>();
+
     @PrePersist
     protected void onCreate() {
         workSpaceCreatedAt = LocalDateTime.now();

@@ -2,6 +2,7 @@ package com.eclectics.collaboration.Tool.service.Impl;
 
 import com.eclectics.collaboration.Tool.dto.WorkSpaceRequestDTO;
 import com.eclectics.collaboration.Tool.dto.WorkSpaceResponseDTO;
+import com.eclectics.collaboration.Tool.enums.WorkspaceRole;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.mapper.WorkSpaceMapper;
 import com.eclectics.collaboration.Tool.model.*;
@@ -34,6 +35,7 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
     private final StarredBoardRepository starredBoardRepository;
     private final ListEntityRepository listEntityRepository;
     private final WorkSpaceMemberRepository workSpaceMemberRepository;
+    private final UserRecentBoardRepository userRecentBoardRepository;
 
     @Override
     public WorkSpaceResponseDTO createWorkspace(User user, WorkSpaceRequestDTO request) {
@@ -118,13 +120,26 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
 
         if (isOwner) {
             deleteWorkspaceCascade(ws);
-        } else {
-            boolean isMember = workSpaceMemberRepository.existsByWorkspace_IdAndUser_Id(workspaceId, user.getId());
-            if (!isMember) {
-                throw new CollaborationExceptions.ForbiddenException("You are not a member of this workspace");
-            }
-            removeMemberFromWorkspace(ws, user);
+            return;
         }
+
+        WorkSpaceMember member = workSpaceMemberRepository
+                .findByWorkspace_IdAndUser_Id(workspaceId, user.getId())
+                .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("You are not a member of this workspace"));
+
+        boolean isAdmin = member.getRole() == WorkspaceRole.ADMIN;
+
+        if (isAdmin) {
+            long remainingAdminsAfterLeaving =
+                    workSpaceMemberRepository.countByWorkspace_IdAndRole(workspaceId, WorkspaceRole.ADMIN) - 1;
+
+            if (remainingAdminsAfterLeaving <= 0) {
+                deleteWorkspaceCascade(ws);
+                return;
+            }
+        }
+
+        removeMemberFromWorkspace(ws, user);
     }
 
     private void removeMemberFromWorkspace(WorkSpace ws, User user) {
@@ -144,6 +159,7 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
 
         for (Boards board : boards) {
             Long boardId = board.getId();
+            userRecentBoardRepository.deleteByBoard_Id(boardId);
             cardAssigneeRepository.deleteByBoardId(boardId);
             List<ListEntity> lists = listEntityRepository.findByBoard_IdOrderByPosition(boardId);
             listEntityRepository.deleteAll(lists);
@@ -173,5 +189,22 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
         WorkSpace saved = workSpaceReposiroty.save(ws);
         log.info("Workspace updated id={} by user={}", saved.getId(), user.getEmail());
         return workSpaceMapper.toDto(saved);
+    }
+
+    @Override
+    public WorkSpaceResponseDTO getWorkspaceById(Long id, User user) {
+        WorkSpace ws = workSpaceReposiroty.findById(id)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Workspace not found"));
+
+        boolean isOwner = ws.getWorkSpaceOwnerId().getId().equals(user.getId());
+        boolean isMember = workSpaceMemberRepository.existsByWorkspace_IdAndUser_Id(id, user.getId());
+
+        if (!isOwner && !isMember) {
+            throw new CollaborationExceptions.ForbiddenException("You are not a member of this workspace");
+        }
+
+        WorkSpaceResponseDTO dto = workSpaceMapper.toDto(ws);
+        dto.setStarred(starredWorkspaceRepository.existsByWorkspace_IdAndUser_Id(id, user.getId()));
+        return dto;
     }
 }

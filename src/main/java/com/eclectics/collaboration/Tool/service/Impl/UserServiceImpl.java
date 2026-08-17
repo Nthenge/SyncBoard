@@ -37,6 +37,10 @@ public class UserServiceImpl implements UserService {
     private final OSSService ossService;
     private final StringRedisTemplate redisTemplate;
     private final RefreshTokenService refreshTokenService;
+    private static final long MAX_AVATAR_SIZE_BYTES = 5L * 1024 * 1024; // 5MB
+    private static final java.util.Set<String> ALLOWED_CONTENT_TYPES = java.util.Set.of(
+            "image/jpeg", "image/png", "image/webp", "image/gif"
+    );
 
     private String getFileExtension(String filename) {
         if (filename != null && filename.lastIndexOf(".") != -1) {
@@ -104,7 +108,7 @@ public class UserServiceImpl implements UserService {
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getEmail());
 
-        return new UserLoginResponseDTO(user.getId(), user.getEmail(), token, user.getFirstName(), refreshToken.getToken(),user.getRole());
+        return new UserLoginResponseDTO(user.getId(), user.getEmail(), token, user.getFirstName(), user.getSirName(), user.getAvatarUrl(), refreshToken.getToken(), user.getRole());
     }
 
     @Override
@@ -248,5 +252,56 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         return new ScratchpadDTO(user.getScratchpadContent(), user.getScratchpadUpdatedAt());
+    }
+
+    @Override
+    public AvatarUploadResponseDTO uploadAvatar(String token, MultipartFile avatar) throws IOException {
+        if (avatar == null || avatar.isEmpty()) {
+            throw new CollaborationExceptions.BadRequestException("No file was uploaded.");
+        }
+
+        if (avatar.getSize() > MAX_AVATAR_SIZE_BYTES) {
+            throw new CollaborationExceptions.BadRequestException("Image must be smaller than 5MB.");
+        }
+
+        String contentType = avatar.getContentType();
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+            throw new CollaborationExceptions.BadRequestException("Only JPEG, PNG, WEBP, or GIF images are allowed.");
+        }
+
+        String email = jwtUtil.extractEmail(token);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
+
+        String oldAvatarUrl = user.getAvatarUrl();
+
+        String ext = getFileExtension(avatar.getOriginalFilename());
+        String path = "SYNCBOARD/avatar/" + user.getId() + "-" + UUID.randomUUID() + ext;
+        String uploadedUrl = ossService.uploadFile(path, avatar.getInputStream());
+
+        user.setAvatarUrl(uploadedUrl);
+        userRepository.save(user);
+
+        if (oldAvatarUrl != null && !oldAvatarUrl.isBlank()) {
+            try {
+                String oldObjectName = extractObjectNameFromUrl(oldAvatarUrl);
+                if (oldObjectName != null) {
+                    ossService.deleteFile(oldObjectName);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to delete old avatar '{}': {}", oldAvatarUrl, e.getMessage());
+            }
+        }
+
+        return new AvatarUploadResponseDTO(uploadedUrl);
+    }
+
+    private String extractObjectNameFromUrl(String url) {
+        String prefix = "https://" + ossService.getBucketName() + "."
+                + ossService.getEndpoint().replace("https://", "") + "/";
+        if (url != null && url.startsWith(prefix)) {
+            return url.substring(prefix.length());
+        }
+        return null;
     }
 }

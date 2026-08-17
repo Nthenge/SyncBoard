@@ -11,7 +11,10 @@ import com.eclectics.collaboration.Tool.mapper.LabelMapper;
 import com.eclectics.collaboration.Tool.model.*;
 import com.eclectics.collaboration.Tool.repository.*;
 import com.eclectics.collaboration.Tool.service.CardService;
+import com.eclectics.collaboration.Tool.service.EmailService;
+import com.eclectics.collaboration.Tool.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +23,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CardServiceImpl implements CardService {
 
     private final CardRepository cardRepository;
@@ -32,6 +36,8 @@ public class CardServiceImpl implements CardService {
     private final LabelRepository labelRepository;
     private final LabelMapper labelMapper;
     private final UserRecentBoardRepository recentBoardRepository;
+    private final NotificationService notificationService;
+    private final EmailService emailService;
 
     // ─── CREATE ───────────────────────────────────────────────────────────────
 
@@ -231,8 +237,12 @@ public class CardServiceImpl implements CardService {
         User newAssignee = userRepository.findById(newAssigneeUserId)
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
 
-        cardAssigneeRepository.findByCardId(cardId)
-                .forEach(existing -> cardAssigneeRepository.deleteByCardIdAndUserId(cardId, existing.getUser().getId()));
+        List<CardAssignee> existingAssignees = cardAssigneeRepository.findByCardId(cardId);
+        boolean alreadyAssigned = existingAssignees.stream()
+                .anyMatch(a -> a.getUser().getId().equals(newAssigneeUserId));
+
+        existingAssignees.forEach(existing ->
+                cardAssigneeRepository.deleteByCardIdAndUserId(cardId, existing.getUser().getId()));
 
         cardAssigneeRepository.save(new CardAssignee(card, newAssignee));
 
@@ -241,7 +251,34 @@ public class CardServiceImpl implements CardService {
 
         trackActivity(requester.getUser(), card.getList().getBoard(), card.getList(), savedCard);
 
+        if (!alreadyAssigned) {
+            notifyAssignment(requester.getUser(), newAssignee, savedCard);
+        }
+
         return enrich(savedCard);
+    }
+
+    private void notifyAssignment(User assigner, User newAssignee, Card card) {
+        try {
+            NotificationPreference pref = notificationService.getOrCreatePreferenceEntity(newAssignee.getId());
+
+            if (pref.isInAppOnAssign()) {
+                notificationService.create(
+                        newAssignee,
+                        Notification.Type.CARD_ASSIGNED,
+                        String.format("%s assigned you to \"%s\"", assigner.getFullName(), card.getTitle()),
+                        "CARD",
+                        card.getId()
+                );
+            }
+
+            if (pref.isEmailOnAssign()) {
+                emailService.sendCardAssignedNotification(newAssignee.getEmail(), assigner.getFullName(), card.getTitle());
+            }
+        } catch (Exception e) {
+            log.error("Failed to send card assignment notification to user {} for card {}: {}",
+                    newAssignee.getId(), card.getId(), e.getMessage(), e);
+        }
     }
 
     @Override

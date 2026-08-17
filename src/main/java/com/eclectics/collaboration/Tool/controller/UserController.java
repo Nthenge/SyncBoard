@@ -197,4 +197,21 @@ public class UserController {
         ScratchpadDTO response = userService.updateScratchpad(token, requestDTO.getContent());
         return ResponseHandler.generateResponse("Scratchpad saved", HttpStatus.OK, response, request.getRequestURI());
     }
+
+    @Operation(summary = "Upload or replace the current user's profile picture")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Avatar uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid file (too large, wrong type, or missing)"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized or missing token"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Object> uploadAvatar(
+            @RequestHeader("Authorization") String tokenHeader,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file
+    ) throws java.io.IOException {
+        String token = tokenHeader.replace("Bearer ", "");
+        AvatarUploadResponseDTO response = userService.uploadAvatar(token, file);
+        return ResponseHandler.generateResponse("Avatar uploaded successfully", HttpStatus.OK, response, request.getRequestURI());
+    }
 }
