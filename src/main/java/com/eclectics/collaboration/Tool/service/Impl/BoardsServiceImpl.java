@@ -3,6 +3,7 @@ package com.eclectics.collaboration.Tool.service.Impl;
 import com.eclectics.collaboration.Tool.dto.BoardsRequestDTO;
 import com.eclectics.collaboration.Tool.dto.BoardsResponseDTO;
 import com.eclectics.collaboration.Tool.enums.BoardRole;
+import com.eclectics.collaboration.Tool.enums.WorkspaceRole;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.mapper.BoardsMapper;
 import com.eclectics.collaboration.Tool.model.*;
@@ -31,6 +32,10 @@ public class BoardsServiceImpl implements BoardsService {
     private final SimpMessagingTemplate messagingTemplate;
     private final StarredBoardRepository starredBoardRepository;
     private final StarredWorkspaceRepository starredWorkspaceRepository;
+    private final WorkSpaceMemberRepository workSpaceMemberRepository;
+    private final ListEntityRepository listEntityRepository;
+    private final CardAssigneeRepository cardAssigneeRepository;
+    private final UserRecentBoardRepository userRecentBoardRepository;
 
 
     // ─── CREATE ───────────────────────────────────────────────────────────────
@@ -60,12 +65,20 @@ public class BoardsServiceImpl implements BoardsService {
 
         boardMemberRepository.save(new BoardMember(savedBoard, currentUser, BoardRole.ADMIN));
 
+        List<WorkSpaceMember> workspaceAdmins = workSpaceMemberRepository
+                .findByWorkspace_IdAndRole(workSpaceId, WorkspaceRole.ADMIN);
+
+        for (WorkSpaceMember wsAdmin : workspaceAdmins) {
+            if (wsAdmin.getUser().getId().equals(currentUser.getId())) {
+                continue;
+            }
+            boardMemberRepository.save(new BoardMember(savedBoard, wsAdmin.getUser(), BoardRole.ADMIN));
+        }
+
         messagingTemplate.convertAndSend("/topic/workspace/" + workSpaceId, mapper.toDto(savedBoard));
 
         return mapper.toDto(savedBoard);
     }
-
-    // ─── READ ─────────────────────────────────────────────────────────────────
 
     @Override
     public BoardsResponseDTO getBoardById(Long boardId) {
@@ -160,7 +173,25 @@ public class BoardsServiceImpl implements BoardsService {
         return dtoo;
     }
 
+    @Transactional
     @Override
+    public void deleteBoardCascade(Boards board) {
+        Long boardId = board.getId();
+
+        userRecentBoardRepository.deleteByBoard_Id(boardId);
+        cardAssigneeRepository.deleteByBoardId(boardId);
+
+        List<ListEntity> lists = listEntityRepository.findByBoard_IdOrderByPosition(boardId);
+        listEntityRepository.deleteAll(lists);
+
+        boardMemberRepository.deleteByBoardId(boardId);
+        starredBoardRepository.deleteByBoard_Id(boardId);
+
+        boardsRepository.delete(board);
+    }
+
+    @Override
+    @Transactional
     public void deleteBoard(Long boardId) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
@@ -178,7 +209,7 @@ public class BoardsServiceImpl implements BoardsService {
         }
 
         Long workSpaceId = board.getWorkSpaceId().getId();
-        boardsRepository.delete(board);
+        deleteBoardCascade(board);
 
         messagingTemplate.convertAndSend("/topic/workspace/" + workSpaceId + "/delete", boardId);
     }

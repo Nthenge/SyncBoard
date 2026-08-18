@@ -2,6 +2,7 @@ package com.eclectics.collaboration.Tool.controller;
 
 import com.eclectics.collaboration.Tool.dto.AddBoardMemberRequestDTO;
 import com.eclectics.collaboration.Tool.enums.BoardRole;
+import com.eclectics.collaboration.Tool.response.ResponseHandler;
 import com.eclectics.collaboration.Tool.security.CustomUserDetails;
 import com.eclectics.collaboration.Tool.service.BoardMemberService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -75,4 +77,24 @@ public class BoardMemberController {
     public ResponseEntity<?> getMembers(@PathVariable Long boardId) {
         return ResponseEntity.ok(service.getMembers(boardId));
     }
+
+    @Operation(summary = "Leave a board")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Left board successfully"),
+            @ApiResponse(responseCode = "403", description = "Not a member of this board")
+    })
+    @DeleteMapping("/leave")
+    public ResponseEntity<Object> leaveBoard(
+            @PathVariable Long boardId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        service.leaveBoard(boardId, userDetails.getUser());
+        return ResponseHandler.generateResponse(
+                "Left board successfully",
+                HttpStatus.OK,
+                null,
+                ""
+        );
+    }
+
 }

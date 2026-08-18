@@ -147,7 +147,7 @@ public class CardServiceImpl implements CardService {
         BoardMember requester = boardMemberRepository
                 .findByBoardIdAndUserId(sourceBoard.getId(), userId)
                 .orElseThrow(() ->
-                        new CollaborationExceptions.ForbiddenException("User is not a member of the board"));
+                        new CollaborationExceptions.ForbiddenException("User is not yet a member of this board"));
 
         ListEntity targetList = listRepository.findById(dto.getTargetListId())
                 .orElseThrow(() ->

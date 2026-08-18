@@ -2,6 +2,7 @@ package com.eclectics.collaboration.Tool.service;
 
 import com.eclectics.collaboration.Tool.dto.BoardsRequestDTO;
 import com.eclectics.collaboration.Tool.dto.BoardsResponseDTO;
+import com.eclectics.collaboration.Tool.model.Boards;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -13,6 +14,9 @@ public interface BoardsService {
 
     @Transactional
     BoardsResponseDTO updateBoard(Long boardId, BoardsRequestDTO dto);
+
+    @Transactional
+    void deleteBoardCascade(Boards board);
 
     void deleteBoard(Long boardId);
 

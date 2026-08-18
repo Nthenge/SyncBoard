@@ -3,6 +3,8 @@ package com.eclectics.collaboration.Tool.repository;
 import com.eclectics.collaboration.Tool.enums.WorkspaceRole;
 import com.eclectics.collaboration.Tool.model.WorkSpaceMember;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
 import java.util.Optional;
 
 public interface WorkSpaceMemberRepository extends JpaRepository<WorkSpaceMember, Long> {
@@ -10,4 +12,7 @@ public interface WorkSpaceMemberRepository extends JpaRepository<WorkSpaceMember
     boolean existsByWorkspace_IdAndUser_Id(Long workspaceId, Long userId);
     void deleteByWorkspace_IdAndUser_Id(Long workspaceId, Long userId);
     long countByWorkspace_IdAndRole(Long workspaceId, WorkspaceRole role);
+    Optional<WorkSpaceMember> findFirstByWorkspace_IdAndRoleAndUser_IdNot(Long workspaceId, WorkspaceRole role, Long excludedUserId);
+
+    List<WorkSpaceMember> findByWorkspace_IdAndRole(Long workSpaceId, WorkspaceRole workspaceRole);
 }

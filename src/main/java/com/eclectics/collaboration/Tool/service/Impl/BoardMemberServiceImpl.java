@@ -1,6 +1,7 @@
 package com.eclectics.collaboration.Tool.service.Impl;
 
 import com.eclectics.collaboration.Tool.dto.BoardMemberResponseDTO;
+import com.eclectics.collaboration.Tool.enums.WorkspaceRole;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.mapper.BoardMemberMapper;
 import com.eclectics.collaboration.Tool.model.*;
@@ -10,6 +11,7 @@ import com.eclectics.collaboration.Tool.repository.BoardsRepository;
 import com.eclectics.collaboration.Tool.repository.UserRespository;
 import com.eclectics.collaboration.Tool.repository.WorkSpaceMemberRepository;
 import com.eclectics.collaboration.Tool.service.BoardMemberService;
+import com.eclectics.collaboration.Tool.service.BoardsService;
 import com.eclectics.collaboration.Tool.service.EmailService;
 import com.eclectics.collaboration.Tool.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ public class BoardMemberServiceImpl implements BoardMemberService {
     private final EmailService emailService;
     private final NotificationService notificationService;
     private final WorkSpaceMemberRepository workSpaceMemberRepository;
+    private final BoardsService boardsService;
 
     @Override
     @Transactional
@@ -40,11 +43,19 @@ public class BoardMemberServiceImpl implements BoardMemberService {
         Boards board = boardsRepository.findById(boardId)
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Board not found"));
 
-        BoardMember requester = boardMemberRepository
-                .findByBoardIdAndUserId(boardId, requesterId)
-                .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("Not a board member"));
+        Long workspaceId = board.getWorkSpaceId().getId();
 
-        requester.assertAdmin();
+        boolean isWorkspaceAdmin = workSpaceMemberRepository
+                .findByWorkspace_IdAndUser_Id(workspaceId, requesterId)
+                .map(wsMember -> wsMember.getRole() == WorkspaceRole.ADMIN)
+                .orElse(false);
+
+        if (!isWorkspaceAdmin) {
+            boardMemberRepository
+                    .findByBoardIdAndUserId(boardId, requesterId)
+                    .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("Not a board member"))
+                    .assertAdmin();
+        }
 
         List<BoardMember> membersToSave = new ArrayList<>();
         List<User> addedUsers = new ArrayList<>();
@@ -54,23 +65,28 @@ public class BoardMemberServiceImpl implements BoardMemberService {
             User user = userRespository.findById(userId)
                     .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
 
-            boolean isWorkspaceMember = workSpaceMemberRepository.existsByWorkspace_IdAndUser_Id(
-                    board.getWorkSpaceId().getId(), user.getId());
-
-            if (!isWorkspaceMember) {
-                throw new CollaborationExceptions.ForbiddenException(
-                        "User is not a workspace member: " + user.getEmail());
-            }
+            WorkSpaceMember wsMember = workSpaceMemberRepository
+                    .findByWorkspace_IdAndUser_Id(workspaceId, user.getId())
+                    .orElseThrow(() -> new CollaborationExceptions.ForbiddenException(
+                            "User is not a workspace member: " + user.getEmail()));
 
             BoardMember member = board.addMember(user);
+
+            if (wsMember.getRole() == WorkspaceRole.ADMIN) {
+                member.changeRole(BoardRole.ADMIN);
+            }
+
             membersToSave.add(member);
             addedUsers.add(user);
         }
 
         List<BoardMember> savedMembers = boardMemberRepository.saveAll(membersToSave);
 
+        User requesterUser = userRespository.findById(requesterId)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Requester not found"));
+
         for (User user : addedUsers) {
-            notifyBoardAdd(requester.getUser(), user, board);
+            notifyBoardAdd(requesterUser, user, board);
         }
 
         return savedMembers.stream()
@@ -126,6 +142,29 @@ public class BoardMemberServiceImpl implements BoardMemberService {
         board.assertMemberCanBeRemoved(target, adminCount);
 
         boardMemberRepository.delete(target);
+    }
+
+    @Transactional
+    @Override
+    public void leaveBoard(Long boardId, User user) {
+        Boards board = boardsRepository.findById(boardId)
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Board not found"));
+
+        BoardMember member = boardMemberRepository
+                .findByBoardIdAndUserId(boardId, user.getId())
+                .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("You are not a member of this board"));
+
+        if (member.isAdmin()) {
+            long remainingAdminsAfterLeaving =
+                    boardMemberRepository.countByBoardIdAndRole(boardId, BoardRole.ADMIN) - 1;
+
+            if (remainingAdminsAfterLeaving <= 0) {
+                boardsService.deleteBoardCascade(board);
+                return;
+            }
+        }
+
+        boardMemberRepository.delete(member);
     }
 
 

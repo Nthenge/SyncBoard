@@ -2,6 +2,7 @@ package com.eclectics.collaboration.Tool.service.Impl;
 
 import com.eclectics.collaboration.Tool.dto.WorkSpaceRequestDTO;
 import com.eclectics.collaboration.Tool.dto.WorkSpaceResponseDTO;
+import com.eclectics.collaboration.Tool.enums.BoardRole;
 import com.eclectics.collaboration.Tool.enums.WorkspaceRole;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.mapper.WorkSpaceMapper;
@@ -38,9 +39,17 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
     private final UserRecentBoardRepository userRecentBoardRepository;
 
     @Override
+    @Transactional
     public WorkSpaceResponseDTO createWorkspace(User user, WorkSpaceRequestDTO request) {
         WorkSpace ws = workSpaceMapper.toEntity(request, user);
         WorkSpace saved = workSpaceReposiroty.save(ws);
+
+        WorkSpaceMember ownerMember = new WorkSpaceMember();
+        ownerMember.setWorkspace(saved);
+        ownerMember.setUser(user);
+        ownerMember.setRole(WorkspaceRole.ADMIN);
+        workSpaceMemberRepository.save(ownerMember);
+
         log.info("Workspace created id={} by user={}", saved.getId(), user.getEmail());
         return workSpaceMapper.toDto(saved);
     }
@@ -116,18 +125,12 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
         WorkSpace ws = workSpaceReposiroty.findById(workspaceId)
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Workspace not found"));
 
-        boolean isOwner = ws.getWorkSpaceOwnerId().getId().equals(user.getId());
-
-        if (isOwner) {
-            deleteWorkspaceCascade(ws);
-            return;
-        }
-
         WorkSpaceMember member = workSpaceMemberRepository
                 .findByWorkspace_IdAndUser_Id(workspaceId, user.getId())
                 .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("You are not a member of this workspace"));
 
         boolean isAdmin = member.getRole() == WorkspaceRole.ADMIN;
+        boolean isOwner = ws.getWorkSpaceOwnerId().getId().equals(user.getId());
 
         if (isAdmin) {
             long remainingAdminsAfterLeaving =
@@ -136,6 +139,21 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
             if (remainingAdminsAfterLeaving <= 0) {
                 deleteWorkspaceCascade(ws);
                 return;
+            }
+
+            if (isOwner) {
+                WorkSpaceMember newOwnerMember = workSpaceMemberRepository
+                        .findFirstByWorkspace_IdAndRoleAndUser_IdNot(workspaceId, WorkspaceRole.ADMIN, user.getId())
+                        .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException(
+                                "No eligible admin found to transfer ownership"));
+
+                ws.setWorkSpaceOwnerId(newOwnerMember.getUser());
+                workSpaceReposiroty.save(ws);
+
+                grantBoardAdminAccessToAllBoards(ws, newOwnerMember.getUser());
+
+                log.info("Workspace ownership transferred id={} from user={} to user={}",
+                        ws.getId(), user.getEmail(), newOwnerMember.getUser().getEmail());
             }
         }
 
@@ -171,13 +189,36 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
         workSpaceReposiroty.delete(ws);
     }
 
+    private void grantBoardAdminAccessToAllBoards(WorkSpace ws, User user) {
+        List<Boards> boards = boardsRepository.findByWorkSpaceId_Id(ws.getId());
+
+        for (Boards board : boards) {
+            BoardMember existing = boardMemberRepository
+                    .findByBoardIdAndUserId(board.getId(), user.getId())
+                    .orElse(null);
+
+            if (existing == null) {
+                boardMemberRepository.save(new BoardMember(board, user, BoardRole.ADMIN));
+            } else if (existing.getRole() != BoardRole.ADMIN) {
+                existing.changeRole(BoardRole.ADMIN);
+                boardMemberRepository.save(existing);
+            }
+        }
+    }
+
     @Transactional
     @Override
     public WorkSpaceResponseDTO updateWorkspace(Long workspaceId, User user, WorkSpaceRequestDTO request) {
         WorkSpace ws = workSpaceReposiroty.findById(workspaceId)
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Workspace not found"));
 
-        if (!ws.getWorkSpaceOwnerId().getId().equals(user.getId())) {
+        boolean isOwner = ws.getWorkSpaceOwnerId().getId().equals(user.getId());
+        boolean isAdminMember = workSpaceMemberRepository
+                .findByWorkspace_IdAndUser_Id(workspaceId, user.getId())
+                .map(m -> m.getRole() == WorkspaceRole.ADMIN)
+                .orElse(false);
+
+        if (!isOwner && !isAdminMember) {
             throw new CollaborationExceptions.ForbiddenException("You do not have permission to edit this workspace");
         }
 

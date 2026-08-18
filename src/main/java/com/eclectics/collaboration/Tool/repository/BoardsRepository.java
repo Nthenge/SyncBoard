@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface BoardsRepository extends JpaRepository<Boards,Long> {
     List<Boards> findAllByWorkSpaceId_Id(Long workSpaceId);
+
+    List<Boards> findByWorkSpaceId_Id(Long id);
 }
