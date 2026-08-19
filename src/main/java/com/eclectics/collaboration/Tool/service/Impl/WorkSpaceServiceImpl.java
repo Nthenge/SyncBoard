@@ -11,6 +11,9 @@ import com.eclectics.collaboration.Tool.repository.*;
 import com.eclectics.collaboration.Tool.service.WorkSpaceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -37,6 +40,17 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
     private final ListEntityRepository listEntityRepository;
     private final WorkSpaceMemberRepository workSpaceMemberRepository;
     private final UserRecentBoardRepository userRecentBoardRepository;
+    private final CacheManager cacheManager;
+
+    // Cache names used across this class:
+    //   "workspaces_my"      -> keyed by user's email, holds myWorkspaces() result
+    //   "workspaces_starred" -> keyed by userId, holds getStarredWorkspaces() result
+    //   "workspace_by_id"    -> keyed by "workspaceId:userId" (starred flag is user-specific)
+    //
+    // All eviction here is manual (via CacheManager) rather than @CacheEvict,
+    // because a workspace mutation can invalidate caches for EVERY member of
+    // that workspace, not just the acting user — something SpEL keys on a
+    // single method argument can't express.
 
     @Override
     @Transactional
@@ -50,15 +64,17 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
         ownerMember.setRole(WorkspaceRole.ADMIN);
         workSpaceMemberRepository.save(ownerMember);
 
+        // Only the creator is affected - no other members exist yet.
+        evictCachesForUser(user.getEmail(), user.getId(), saved.getId());
+
         log.info("Workspace created id={} by user={}", saved.getId(), user.getEmail());
         return workSpaceMapper.toDto(saved);
     }
 
     @Override
+    @Cacheable(value = "workspaces_my", key = "#root.target.resolveCurrentUserEmail()")
     public List<WorkSpaceResponseDTO> myWorkspaces() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String email = (principal instanceof UserDetails) ?
-                ((UserDetails)principal).getUsername() : principal.toString();
+        String email = resolveCurrentUserEmail();
 
         User user = userRespository.findByEmail(email)
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
@@ -78,6 +94,16 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Extracted from myWorkspaces() so the same email-resolution logic can be
+     * referenced from the @Cacheable key SpEL via #root.target.
+     */
+    public String resolveCurrentUserEmail() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return (principal instanceof UserDetails) ?
+                ((UserDetails) principal).getUsername() : principal.toString();
+    }
+
     @Transactional
     @Override
     public void deleteWorkspace(Long workspaceId, User user) {
@@ -87,7 +113,14 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
         if (!ws.getWorkSpaceOwnerId().getId().equals(user.getId())) {
             throw new RuntimeException("You do not have permission to delete this workspace");
         }
+
+        // Snapshot members BEFORE deleting - once the workspace is gone,
+        // membership rows may cascade-delete along with it and we'd lose the list.
+        List<WorkSpaceMember> members = workSpaceMemberRepository.findByWorkspace_Id(workspaceId);
+
         workSpaceReposiroty.delete(ws);
+
+        evictCachesForMembers(members, workspaceId);
     }
 
     @Transactional
@@ -99,16 +132,22 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
 
         Optional<StarredWorkspace> existing = starredWorkspaceRepository.findByWorkspace_IdAndUser_Id(workspaceId, userId);
+        boolean result;
         if (existing.isPresent()) {
             starredWorkspaceRepository.delete(existing.get());
-            return false;
+            result = false;
         } else {
             starredWorkspaceRepository.save(new StarredWorkspace(workspace, user));
-            return true;
+            result = true;
         }
+
+        // Only the acting user's starred flag changed - no other member is affected.
+        evictCachesForUser(user.getEmail(), user.getId(), workspaceId);
+        return result;
     }
 
     @Override
+    @Cacheable(value = "workspaces_starred", key = "#userId")
     public List<WorkSpaceResponseDTO> getStarredWorkspaces(Long userId) {
         return starredWorkspaceRepository.findByUser_Id(userId).stream()
                 .map(sw -> {
@@ -129,6 +168,11 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
                 .findByWorkspace_IdAndUser_Id(workspaceId, user.getId())
                 .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("You are not a member of this workspace"));
 
+        // Snapshot the full member list up front - every exit path below
+        // (cascade-delete, ownership transfer, plain leave) needs to evict
+        // caches for members who existed BEFORE this method starts mutating rows.
+        List<WorkSpaceMember> membersBeforeLeaving = workSpaceMemberRepository.findByWorkspace_Id(workspaceId);
+
         boolean isAdmin = member.getRole() == WorkspaceRole.ADMIN;
         boolean isOwner = ws.getWorkSpaceOwnerId().getId().equals(user.getId());
 
@@ -138,6 +182,7 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
 
             if (remainingAdminsAfterLeaving <= 0) {
                 deleteWorkspaceCascade(ws);
+                evictCachesForMembers(membersBeforeLeaving, workspaceId);
                 return;
             }
 
@@ -158,6 +203,11 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
         }
 
         removeMemberFromWorkspace(ws, user);
+
+        // Ownership transfer changes ws.getWorkSpaceOwnerId() for every member's
+        // getWorkspaceById() view, and the leaving user drops out of everyone's
+        // membership-derived state - evict everyone who was in the workspace.
+        evictCachesForMembers(membersBeforeLeaving, workspaceId);
     }
 
     private void removeMemberFromWorkspace(WorkSpace ws, User user) {
@@ -228,11 +278,18 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
         ws.setWorkSpaceDescription(request.getWorkSpaceDescription());
 
         WorkSpace saved = workSpaceReposiroty.save(ws);
+
+        // Name/description changed - every member's getWorkspaceById() and
+        // myWorkspaces() view of this workspace is now stale.
+        List<WorkSpaceMember> members = workSpaceMemberRepository.findByWorkspace_Id(workspaceId);
+        evictCachesForMembers(members, workspaceId);
+
         log.info("Workspace updated id={} by user={}", saved.getId(), user.getEmail());
         return workSpaceMapper.toDto(saved);
     }
 
     @Override
+    @Cacheable(value = "workspace_by_id", key = "#id + ':' + #user.id")
     public WorkSpaceResponseDTO getWorkspaceById(Long id, User user) {
         WorkSpace ws = workSpaceReposiroty.findById(id)
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Workspace not found"));
@@ -247,5 +304,29 @@ public class WorkSpaceServiceImpl implements WorkSpaceService {
         WorkSpaceResponseDTO dto = workSpaceMapper.toDto(ws);
         dto.setStarred(starredWorkspaceRepository.existsByWorkspace_IdAndUser_Id(id, user.getId()));
         return dto;
+    }
+
+    // ---- cache eviction helpers ----
+
+    private void evictCachesForMembers(List<WorkSpaceMember> members, Long workspaceId) {
+        for (WorkSpaceMember m : members) {
+            User u = m.getUser();
+            evictCachesForUser(u.getEmail(), u.getId(), workspaceId);
+        }
+    }
+
+    private void evictCachesForUser(String email, Long userId, Long workspaceId) {
+        Cache myWorkspacesCache = cacheManager.getCache("workspaces_my");
+        if (myWorkspacesCache != null) {
+            myWorkspacesCache.evict(email);
+        }
+        Cache starredCache = cacheManager.getCache("workspaces_starred");
+        if (starredCache != null) {
+            starredCache.evict(userId);
+        }
+        Cache byIdCache = cacheManager.getCache("workspace_by_id");
+        if (byIdCache != null) {
+            byIdCache.evict(workspaceId + ":" + userId);
+        }
     }
 }

@@ -147,19 +147,31 @@ public class CardServiceImpl implements CardService {
         BoardMember requester = boardMemberRepository
                 .findByBoardIdAndUserId(sourceBoard.getId(), userId)
                 .orElseThrow(() ->
-                        new CollaborationExceptions.ForbiddenException("User is not yet a member of this board"));
+                        new CollaborationExceptions.ForbiddenException("Only members of a board can move cards."));
+
+        // Only the card's assignee(s) or a board admin may move the card
+        boolean isAssignee = cardAssigneeRepository.existsByCardIdAndUserId(cardId, userId);
+        if (!requester.isAdmin() && !isAssignee) {
+            throw new CollaborationExceptions.ForbiddenException(
+                    "Only the assigned member or a board admin can move this card.");
+        }
 
         ListEntity targetList = listRepository.findById(dto.getTargetListId())
                 .orElseThrow(() ->
                         new CollaborationExceptions.ResourceNotFoundException("Target list not found"));
 
-        // If moving across boards, verify membership on target board too
+        // If moving across boards, verify membership + permission on target board too
         Boards targetBoard = targetList.getBoard();
         if (!targetBoard.getId().equals(sourceBoard.getId())) {
-            boardMemberRepository
+            BoardMember targetRequester = boardMemberRepository
                     .findByBoardIdAndUserId(targetBoard.getId(), userId)
                     .orElseThrow(() ->
                             new CollaborationExceptions.ForbiddenException("User is not a member of the target board"));
+
+            if (!targetRequester.isAdmin() && !isAssignee) {
+                throw new CollaborationExceptions.ForbiddenException(
+                        "Only the assigned member or a board admin can move this card to another board.");
+            }
         }
 
         // Shift positions in the target list to make room at newIndex
@@ -196,7 +208,6 @@ public class CardServiceImpl implements CardService {
         return enrich(savedCard);
     }
 
-    // ─── DELETE ───────────────────────────────────────────────────────────────
 
     @Transactional
     @Override
@@ -230,6 +241,10 @@ public class CardServiceImpl implements CardService {
 
         BoardMember requester = boardMemberRepository.findByBoardIdAndUserId(boardId, requestingUserId)
                 .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("User is not a member of the board"));
+
+        if (!requester.isAdmin()) {
+            throw new CollaborationExceptions.ForbiddenException("Only board admins can assign cards.");
+        }
 
         boardMemberRepository.findByBoardIdAndUserId(boardId, newAssigneeUserId)
                 .orElseThrow(() -> new CollaborationExceptions.ForbiddenException("New assignee is not a member of the board"));

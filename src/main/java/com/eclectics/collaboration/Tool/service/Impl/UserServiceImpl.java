@@ -12,6 +12,9 @@ import com.eclectics.collaboration.Tool.service.UserService;
 import com.eclectics.collaboration.Tool.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -37,6 +40,7 @@ public class UserServiceImpl implements UserService {
     private final OSSService ossService;
     private final StringRedisTemplate redisTemplate;
     private final RefreshTokenService refreshTokenService;
+
     private static final long MAX_AVATAR_SIZE_BYTES = 5L * 1024 * 1024; // 5MB
     private static final java.util.Set<String> ALLOWED_CONTENT_TYPES = java.util.Set.of(
             "image/jpeg", "image/png", "image/webp", "image/gif"
@@ -79,12 +83,11 @@ public class UserServiceImpl implements UserService {
         try {
             emailService.sendAccountConfirmationEmail(savedUser.getEmail(), confirmLink);
         } catch (Exception e) {
-            UserServiceImpl.log.error("Failed to send Email to user, but user saved", e);
+            log.error("Failed to send Email to user, but user saved", e);
         }
 
         return new UserRegistrationResponseDTO(savedUser.getFirstName(), token);
     }
-
 
     @Override
     public UserLoginResponseDTO userLogin(UserLoginRequestDTO loginRequestDTO) {
@@ -92,10 +95,6 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(loginRequestDTO.getEmail())
                 .orElseThrow(() -> new CollaborationExceptions.BadRequestException(
                         "Your details aren't in our system, please register"));
-
-        if (!passwordEncoder.matches(loginRequestDTO.getPassword(), user.getPassword())) {
-            throw new CollaborationExceptions.BadRequestException("Invalid email or password");
-        }
 
         if (!passwordEncoder.matches(loginRequestDTO.getPassword(), user.getPassword())) {
             throw new CollaborationExceptions.BadRequestException("Invalid email or password");
@@ -139,11 +138,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @CacheEvict(value = "user_scratchpad", key = "#root.target.extractEmail(#token)")
     public UserRegistrationRequestDTO updateUser(String token, UserRegistrationRequestDTO userDTO) {
         String email = jwtUtil.extractEmail(token);
 
         User existingUser = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("User not found"));
 
         if (userDTO.getFirstName() != null) existingUser.setFirstName(userDTO.getFirstName());
         if (userDTO.getSirName() != null) existingUser.setSirName(userDTO.getSirName());
@@ -171,6 +171,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @CacheEvict(value = "user_scratchpad", key = "#root.target.extractEmail(#token)")
     public void userDeleteAccount(String token) {
         String jwt = token.startsWith("Bearer ") ? token.substring(7) : token;
         String tokenId = jwtUtil.extractId(jwt);
@@ -195,10 +196,10 @@ public class UserServiceImpl implements UserService {
         RefreshToken refreshToken = refreshTokenService.findByToken(requestToken)
                 .orElseThrow(() -> new CollaborationExceptions.UnauthorizedException("Refresh token not found. Please log in again."));
 
-        refreshTokenService.verifyExpiration(refreshToken); // throws if expired
+        refreshTokenService.verifyExpiration(refreshToken);
 
         String email = refreshToken.getUser().getEmail();
-        String newAccessToken = jwtUtil.generateToken(email,refreshToken.getUser().getRole());
+        String newAccessToken = jwtUtil.generateToken(email, refreshToken.getUser().getRole());
 
         return new TokenRefreshResponseDTO(newAccessToken, requestToken);
     }
@@ -221,9 +222,8 @@ public class UserServiceImpl implements UserService {
                     );
                 }
 
-                // Also revoke the refresh token
                 String email = jwtUtil.extractEmail(jwt);
-                refreshTokenService.deleteByUser(email); // new
+                refreshTokenService.deleteByUser(email);
 
             } catch (Exception e) {
                 log.error("Could not blacklist token: {}", e.getMessage());
@@ -234,6 +234,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Cacheable(value = "user_scratchpad", key = "#root.target.extractEmail(#token)")
     public ScratchpadDTO getScratchpad(String token) {
         String email = jwtUtil.extractEmail(token);
         User user = userRepository.findByEmail(email)
@@ -242,6 +243,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @CachePut(value = "user_scratchpad", key = "#root.target.extractEmail(#token)")
     public ScratchpadDTO updateScratchpad(String token, String content) {
         String email = jwtUtil.extractEmail(token);
         User user = userRepository.findByEmail(email)
@@ -255,6 +257,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @CacheEvict(value = "user_scratchpad", key = "#root.target.extractEmail(#token)")
     public AvatarUploadResponseDTO uploadAvatar(String token, MultipartFile avatar) throws IOException {
         if (avatar == null || avatar.isEmpty()) {
             throw new CollaborationExceptions.BadRequestException("No file was uploaded.");
@@ -294,6 +297,11 @@ public class UserServiceImpl implements UserService {
         }
 
         return new AvatarUploadResponseDTO(uploadedUrl);
+    }
+
+    public String extractEmail(String token) {
+        String jwt = token != null && token.startsWith("Bearer ") ? token.substring(7) : token;
+        return jwtUtil.extractEmail(jwt);
     }
 
     private String extractObjectNameFromUrl(String url) {
