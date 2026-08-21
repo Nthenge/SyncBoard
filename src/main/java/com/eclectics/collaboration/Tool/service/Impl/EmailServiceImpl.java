@@ -54,10 +54,10 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendAccountConfirmationEmail(String to, String confirmLink) {
-        String subject = "SYNCBOARD ACCOUNT CONFIRMATION";
+        String subject = "FLOWDECK ACCOUNT CONFIRMATION";
         String text = """
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
-                <h2 style="color: #4F46E5;">Welcome to SYNCBOARD!</h2>
+                <h2 style="color: #4F46E5;">Welcome to FLOEDECK!</h2>
                 <p>Hello,</p>
                 <p>Thank you for registering! Please confirm your account by clicking the button below:</p>
                 <a href="%s"
@@ -70,7 +70,7 @@ public class EmailServiceImpl implements EmailService {
                      alt="Team Collaboration"
                      style="width:100%%; max-width:500px; border-radius:8px; margin: 16px 0;" />
                 <br/>
-                <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+                <p>Best regards,<br/><strong>FLOWDECK</strong></p>
             </div>
             """.formatted(confirmLink);
         sendEmail(to, subject, text);
@@ -78,7 +78,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendPasswordResetEmail(String to, String resetLink) {
-        String subject = "SYNCBOARD RESET PASSWORD";
+        String subject = "FLOWDECK RESET PASSWORD";
         String text = """
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
                 <h2 style="color: #4F46E5;">Password Reset Request</h2>
@@ -95,7 +95,7 @@ public class EmailServiceImpl implements EmailService {
                      alt="Team Collaboration"
                      style="width:100%%; max-width:500px; border-radius:8px; margin: 16px 0;" />
                 <br/>
-                <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+                <p>Best regards,<br/><strong>FLOWDECK</strong></p>
             </div>
             """.formatted(resetLink);
         sendEmail(to, subject, text);
@@ -103,7 +103,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendMentionNotification(String to, String mentionerName, String cardTitle, String commentSnippet) {
-        String subject = "SYNCBOARD — You were mentioned in a comment";
+        String subject = "FLOWDECK. You were mentioned in a comment";
         String text = """
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
             <h2 style="color: #4F46E5;">You were mentioned</h2>
@@ -112,9 +112,9 @@ public class EmailServiceImpl implements EmailService {
             <div style="background:#f3f4f6; border-left: 3px solid #4F46E5; padding: 12px 16px; margin: 16px 0; color:#334155;">
                 %s
             </div>
-            <p style="color: #888; font-size: 13px;">Log in to SyncBoard to view and reply.</p>
+            <p style="color: #888; font-size: 13px;">Log in to Flowdeck to view and reply.</p>
             <br/>
-            <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+            <p>Best regards,<br/><strong>FLOWDECK</strong></p>
         </div>
         """.formatted(mentionerName, cardTitle, commentSnippet);
         sendEmail(to, subject, text);
@@ -176,7 +176,7 @@ public class EmailServiceImpl implements EmailService {
     }
     @Override
     public void sendInvitationEmail(String to, String token, String workspaceName) {
-        String subject = "SYNCBOARD WORKSPACE INVITE";
+        String subject = "FLOWDECK WORKSPACE INVITE";
         String text = """
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
                 <h2 style="color: #4F46E5;">You're Invited to Join a Workspace!</h2>
@@ -199,7 +199,7 @@ public class EmailServiceImpl implements EmailService {
                      alt="Team Collaboration"
                      style="width:100%%; max-width:500px; border-radius:8px; margin: 16px 0;" />
                 <br/>
-                <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+                <p>Best regards,<br/><strong>FLOWDECK</strong></p>
             </div>
             """.formatted(workspaceName, token, token);
         sendEmail(to, subject, text);
@@ -207,7 +207,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendInviteRejectedEmail(String ownerEmail, String inviteeEmail, String workspaceName) {
-        String subject = "SYNCBOARD INVITE DECLINE";
+        String subject = "FLOWDECK INVITE DECLINE";
         String text = """
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
                 <h2 style="color: #4F46E5;">Workspace Invite Declined</h2>
@@ -219,7 +219,7 @@ public class EmailServiceImpl implements EmailService {
                      alt="Team Collaboration"
                      style="width:100%%; max-width:500px; border-radius:8px; margin: 16px 0;" />
                 <br/>
-                <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+                <p>Best regards,<br/><strong>FLOWDECK</strong></p>
             </div>
             """.formatted(inviteeEmail, workspaceName);
         sendEmail(ownerEmail, subject, text);
@@ -228,7 +228,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendNewSupportNotification(String submitterName, String submitterEmail, String issueName, String message) {
         String adminEmail = systemConfigService.getValueByKey(ConfigKey.SUPPORT_EMAIL);
-        String subject = "SYNCBOARD — New Support Request Received";
+        String subject = "FLOWDECK. New Support Request Received";
         String text = """
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
             <h2 style="color: #4F46E5;">New Support Request</h2>
@@ -260,7 +260,7 @@ public class EmailServiceImpl implements EmailService {
                 Log in to the admin dashboard to review and update the status of this request.
             </p>
             <br/>
-            <p>Best regards,<br/><strong>SYNCBOARD SYSTEM</strong></p>
+            <p>Best regards,<br/><strong>FLOWDECK SYSTEM</strong></p>
         </div>
         """.formatted(submitterName, submitterEmail, submitterEmail, issueName, message);
 
@@ -306,15 +306,15 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendCardAssignedNotification(String to, String assignerName, String cardTitle) {
-        String subject = "SYNCBOARD — You were assigned a card";
+        String subject = "FLOWDECK — You were assigned a card";
         String text = """
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
             <h2 style="color: #4F46E5;">You were assigned a card</h2>
             <p>Hello,</p>
             <p><strong>%s</strong> assigned you to the card <strong>%s</strong>.</p>
-            <p style="color: #888; font-size: 13px;">Log in to SyncBoard to view the card.</p>
+            <p style="color: #888; font-size: 13px;">Log in to Flowdeck to view the card.</p>
             <br/>
-            <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+            <p>Best regards,<br/><strong>FLOWDECK</strong></p>
         </div>
         """.formatted(assignerName, cardTitle);
         sendEmail(to, subject, text);
@@ -322,15 +322,15 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendBoardAddedNotification(String to, String adderName, String boardName) {
-        String subject = "SYNCBOARD — You were added to a board";
+        String subject = "Flowdeck — You were added to a board";
         String text = """
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
             <h2 style="color: #4F46E5;">You were added to a board</h2>
             <p>Hello,</p>
             <p><strong>%s</strong> added you to the board <strong>%s</strong>.</p>
-            <p style="color: #888; font-size: 13px;">Log in to SyncBoard to view the board.</p>
+            <p style="color: #888; font-size: 13px;">Log in to Flowdeck to view the board.</p>
             <br/>
-            <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+            <p>Best regards,<br/><strong>FLOWDECK</strong></p>
         </div>
         """.formatted(adderName, boardName);
         sendEmail(to, subject, text);
@@ -338,16 +338,16 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendDueSoonNotification(String to, String cardTitle, LocalDateTime dueDate) {
-        String subject = "SYNCBOARD — Card due soon";
+        String subject = "Flowdeck. Card due soon";
         String formattedDueDate = dueDate.format(DateTimeFormatter.ofPattern("MMM d, yyyy 'at' h:mm a"));
         String text = """
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
             <h2 style="color: #4F46E5;">Card due soon</h2>
             <p>Hello,</p>
             <p>Your card <strong>%s</strong> is due on <strong>%s</strong>.</p>
-            <p style="color: #888; font-size: 13px;">Log in to SyncBoard to view the card.</p>
+            <p style="color: #888; font-size: 13px;">Log in to Flowdeck to view the card.</p>
             <br/>
-            <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+            <p>Best regards,<br/><strong>FLOWDECK</strong></p>
         </div>
         """.formatted(cardTitle, formattedDueDate);
         sendEmail(to, subject, text);
@@ -355,7 +355,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendWeeklyDigest(String to, String userName, List<String> assignedCardTitles, List<String> mentionSummaries) {
-        String subject = "SYNCBOARD — Your weekly digest";
+        String subject = "Flowdeck. Your weekly digest";
 
         StringBuilder cardsHtml = new StringBuilder();
         if (!assignedCardTitles.isEmpty()) {
@@ -379,12 +379,12 @@ public class EmailServiceImpl implements EmailService {
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
             <h2 style="color: #4F46E5;">Your weekly digest</h2>
             <p>Hello %s,</p>
-            <p>Here's what happened on SyncBoard this week:</p>
+            <p>Here's what happened on Flowdeck this week:</p>
             %s
             %s
-            <p style="color: #888; font-size: 13px;">Log in to SyncBoard to view details.</p>
+            <p style="color: #888; font-size: 13px;">Log in to Flowdeck to view details.</p>
             <br/>
-            <p>Best regards,<br/><strong>SYNCBOARD KENYA</strong></p>
+            <p>Best regards,<br/><strong>FLOWDECK</strong></p>
         </div>
         """.formatted(userName, cardsHtml, mentionsHtml);
 
