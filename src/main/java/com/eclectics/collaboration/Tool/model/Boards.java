@@ -25,6 +25,7 @@ public class Boards {
     private WorkSpace workSpaceId;
 
     private String boardName;
+    @Column(name = "board_description", columnDefinition = "TEXT")
     private String boardDescription;
     private String boardCreatedBy;
     private LocalDateTime boardCreatedAt;

@@ -26,7 +26,7 @@ public class WorkSpace {
     @Column(nullable = false)
     private String workSpaceName;
 
-    @Column(length = 500)
+    @Column(length =5000)
     private String workSpaceDescription;
 
     private String workSpaceCreatedBy;

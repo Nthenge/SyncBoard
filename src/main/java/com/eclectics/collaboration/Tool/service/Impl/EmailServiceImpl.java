@@ -1,6 +1,7 @@
 package com.eclectics.collaboration.Tool.service.Impl;
 
 import com.eclectics.collaboration.Tool.dto.InviteRequestDTO;
+import com.eclectics.collaboration.Tool.dto.InviteResponseDTO;
 import com.eclectics.collaboration.Tool.enums.WorkspaceRole;
 import com.eclectics.collaboration.Tool.exception.CollaborationExceptions;
 import com.eclectics.collaboration.Tool.enums.ConfigKey;
@@ -8,6 +9,7 @@ import com.eclectics.collaboration.Tool.model.Invitation;
 import com.eclectics.collaboration.Tool.model.User;
 import com.eclectics.collaboration.Tool.model.WorkSpace;
 import com.eclectics.collaboration.Tool.repository.InvitationRepository;
+import com.eclectics.collaboration.Tool.repository.UserRespository;
 import com.eclectics.collaboration.Tool.repository.WorkSpaceMemberRepository;
 import com.eclectics.collaboration.Tool.repository.WorkSpaceReposiroty;
 import com.eclectics.collaboration.Tool.service.EmailService;
@@ -24,10 +26,7 @@ import java.time.LocalDateTime;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
@@ -39,6 +38,7 @@ public class EmailServiceImpl implements EmailService {
     private final InvitationRepository invitationRepository;
     private final SystemConfigService systemConfigService;
     private final WorkSpaceMemberRepository workSpaceMemberRepository;
+    private final UserRespository userRespository;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
@@ -122,7 +122,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Transactional
     @Override
-    public void inviteUsers(User owner, InviteRequestDTO inviteDto, Long workspaceId) {
+    public InviteResponseDTO inviteUsers(User owner, InviteRequestDTO inviteDto, Long workspaceId) {
         WorkSpace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new CollaborationExceptions.ResourceNotFoundException("Workspace not found"));
 
@@ -136,21 +136,44 @@ public class EmailServiceImpl implements EmailService {
             throw new CollaborationExceptions.UnauthorizedException("Only the workspace owner or an admin can invite others");
         }
 
+        List<InviteResponseDTO.InviteResultDTO> results = new ArrayList<>();
+
         for (InviteRequestDTO.InviteeDTO invitee : inviteDto.getInvitations()) {
+            String email = invitee.getEmail();
+
+            Optional<User> existingUser = userRespository.findByEmail(email);
+            if (existingUser.isPresent()) {
+                boolean alreadyMember = workSpaceMemberRepository
+                        .findByWorkspace_IdAndUser_Id(workspaceId, existingUser.get().getId())
+                        .isPresent();
+
+                if (alreadyMember) {
+                    results.add(new InviteResponseDTO.InviteResultDTO(
+                            email, false, "This user is already a member of the workspace"
+                    ));
+                    continue;
+                }
+            }
+
             String token = UUID.randomUUID().toString();
 
             Invitation invite = new Invitation();
-            invite.setEmail(invitee.getEmail());
+            invite.setEmail(email);
             invite.setWorkspace(workspace);
             invite.setInviteToken(token);
             invite.setExpiryDate(LocalDateTime.now().plusDays(7));
             invite.setRole(invitee.getRole() != null ? invitee.getRole() : WorkspaceRole.MEMBER);
 
             invitationRepository.save(invite);
-            sendInvitationEmail(invitee.getEmail(), token, workspace.getWorkSpaceName());
-        }
-    }
+            sendInvitationEmail(email, token, workspace.getWorkSpaceName());
 
+            results.add(new InviteResponseDTO.InviteResultDTO(
+                    email, true, "Invitation sent"
+            ));
+        }
+
+        return new InviteResponseDTO(results);
+    }
     @Override
     public void sendInvitationEmail(String to, String token, String workspaceName) {
         String subject = "SYNCBOARD WORKSPACE INVITE";

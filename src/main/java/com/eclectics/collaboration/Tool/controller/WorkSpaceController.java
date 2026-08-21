@@ -74,13 +74,21 @@ public class WorkSpaceController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             HttpServletRequest request) throws AccessDeniedException {
 
-        emailService.inviteUsers(userDetails.getUser(), inviteRequest, workspaceId);
+        InviteResponseDTO response = emailService.inviteUsers(userDetails.getUser(), inviteRequest, workspaceId);
 
-        List<String> emails = inviteRequest.getInvitations().stream()
-                .map(InviteRequestDTO.InviteeDTO::getEmail)
-                .toList();
-        String message = "Invitations sent successfully to: " + String.join(", ", emails);
-        return ResponseHandler.generateResponse(message, HttpStatus.OK, null, request.getRequestURI());
+        long sentCount = response.getResults().stream().filter(InviteResponseDTO.InviteResultDTO::isSuccess).count();
+        long skippedCount = response.getResults().size() - sentCount;
+
+        String message;
+        if (skippedCount == 0) {
+            message = "Invitations sent successfully to all " + sentCount + " invitee(s)";
+        } else if (sentCount == 0) {
+            message = "No invitations were sent — all invitees are already workspace members";
+        } else {
+            message = sentCount + " invitation(s) sent, " + skippedCount + " skipped (already a member)";
+        }
+
+        return ResponseHandler.generateResponse(message, HttpStatus.OK, response, request.getRequestURI());
     }
 
     @Operation(summary = "Accept a pending workspace invitation token")

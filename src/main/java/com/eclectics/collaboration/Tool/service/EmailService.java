@@ -1,6 +1,7 @@
 package com.eclectics.collaboration.Tool.service;
 
 import com.eclectics.collaboration.Tool.dto.InviteRequestDTO;
+import com.eclectics.collaboration.Tool.dto.InviteResponseDTO;
 import com.eclectics.collaboration.Tool.model.User;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,7 +15,9 @@ public interface EmailService {
 
     void sendMentionNotification(String to, String mentionerName, String cardTitle, String commentSnippet);
 
-    void inviteUsers(User owner, InviteRequestDTO inviteDto, Long workspaceId);
+    @Transactional
+    InviteResponseDTO inviteUsers(User owner, InviteRequestDTO inviteDto, Long workspaceId);
+
     void sendInvitationEmail(String to, String token, String workspaceName);
     void sendInviteRejectedEmail(String ownerEmail, String inviteeEmail, String workspaceName);
     void sendNewSupportNotification(String submitterName, String submitterEmail, String issueName, String message);

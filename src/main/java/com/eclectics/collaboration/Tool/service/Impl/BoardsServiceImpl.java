@@ -159,6 +159,9 @@ public class BoardsServiceImpl implements BoardsService {
         if (dto.getBoardName() != null && !dto.getBoardName().isBlank()) {
             board.setBoardName(dto.getBoardName());
         }
+        if (dto.getBoardDescription() != null && !dto.getBoardDescription().isBlank()) {
+            board.setBoardDescription(dto.getBoardDescription());
+        }
 
         Boards updated = boardsRepository.save(board);
 
